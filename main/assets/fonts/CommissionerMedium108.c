@@ -2,7 +2,7 @@
  * Size: 108 px
  * Bpp: 2
  * Opts: --bpp 2 --size 108 --no-compress --stride 1 --align 1 --font Commissioner-Medium.ttf --symbols 0123456789:().
- *--format lvgl -o CommissionerMedium108.c
+ * --format lvgl -o CommissionerMedium108.c
  ******************************************************************************/
 
 #ifdef __has_include
@@ -723,7 +723,7 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 #if LVGL_VERSION_MAJOR >= 8
 const lv_font_t CommissionerMedium108 = {
 #else
-lv_font_t CommissionerMedium108       = {
+lv_font_t CommissionerMedium108 = {
 #endif
     .get_glyph_dsc    = lv_font_get_glyph_dsc_fmt_txt, /*Function pointer to get glyph's data*/
     .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/

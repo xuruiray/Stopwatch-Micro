@@ -104,8 +104,8 @@ void Hal::pmic_init()
     _pm1->btnSetConfig(M5PM1_BTN_TYPE_CLICK, M5PM1_BTN_CLICK_DELAY_1000MS);
     // disable WDT, default is open
     _pm1->wdtSet(0);
-    //  hold LDO power close when power off, default is close
-    _pm1->ldoSetPowerHold(false);
+    //  hold LDO power close when power off, keep power for RTC
+    _pm1->ldoSetPowerHold(true);
 
     // set charge enable or disable, this setting will keep working after power off
     _pm1->setChargeEnable(true);

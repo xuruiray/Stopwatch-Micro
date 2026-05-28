@@ -43,11 +43,11 @@ void Hal::ioe_init()
     _ioe                  = std::make_unique<M5IOE1>();
     auto* bus             = i2c_bus_get_internal_bus_handle(_i2c_bus);
     uint8_t selected_addr = _ioe_addr_primary;
-    auto ret              = _ioe->begin(bus, _ioe_addr_primary);
+    auto ret              = _ioe->begin(bus, _ioe_addr_primary, M5IOE1_I2C_FREQ_400K);
 
     if (ret != M5IOE1_OK) {
         selected_addr = _ioe_addr_secondary;
-        ret           = _ioe->begin(bus, _ioe_addr_secondary);
+        ret           = _ioe->begin(bus, _ioe_addr_secondary, M5IOE1_I2C_FREQ_400K);
     }
 
     if (ret != M5IOE1_OK) {
