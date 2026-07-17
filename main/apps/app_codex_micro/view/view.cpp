@@ -18,74 +18,75 @@ namespace {
 
 constexpr const char* Tag = "CodexMicro-UI";
 
-constexpr uint32_t Background = 0x0A0D0B;
-constexpr uint32_t Text = 0xF7F7F0;
-constexpr uint32_t Green = 0x59E3A5;
-constexpr uint32_t Key = 0xF1F0EB;
-constexpr uint32_t KeyPressed = 0xE8ECE8;
-constexpr uint32_t KeyHigh = 0xFFFFFA;
-constexpr uint32_t KeyPressedHigh = 0xFFFFFF;
-constexpr uint32_t KeyPressedLow = 0xEEF4F0;
-constexpr uint32_t KeyBorder = 0xFFFFFA;
-constexpr uint32_t KeyInk = 0x171A18;
-constexpr uint32_t KeyMuted = 0x69716D;
-constexpr uint32_t CodexBlue = 0x566BF7;
-constexpr uint32_t CodexBlueHigh = 0x9DA1FC;
-constexpr uint32_t CodexLavender = 0xC2B8FF;
-constexpr uint32_t ArcTrack = 0x686D6A;
-constexpr uint32_t ArcThumb = 0x626763;
-constexpr uint32_t ArcThumbBorder = 0xA9AEAB;
-constexpr uint32_t ArcThumbActive = 0x747A76;
-constexpr uint32_t ArcThumbActiveBorder = 0xD1D5D3;
-constexpr uint32_t ArcThumbReturning = 0x656A67;
+constexpr uint32_t Background              = 0x0A0D0B;
+constexpr uint32_t Text                    = 0xF7F7F0;
+constexpr uint32_t Green                   = 0x59E3A5;
+constexpr uint32_t Key                     = 0xF1F0EB;
+constexpr uint32_t KeyPressed              = 0xE8ECE8;
+constexpr uint32_t KeyHigh                 = 0xFFFFFA;
+constexpr uint32_t KeyPressedHigh          = 0xFFFFFF;
+constexpr uint32_t KeyPressedLow           = 0xEEF4F0;
+constexpr uint32_t KeyBorder               = 0xFFFFFA;
+constexpr uint32_t KeyInk                  = 0x171A18;
+constexpr uint32_t KeyMuted                = 0x69716D;
+constexpr uint32_t CodexBlue               = 0x566BF7;
+constexpr uint32_t CodexBlueHigh           = 0x9DA1FC;
+constexpr uint32_t CodexLavender           = 0xC2B8FF;
+constexpr uint32_t ArcTrack                = 0x686D6A;
+constexpr uint32_t ArcThumb                = 0x626763;
+constexpr uint32_t ArcThumbBorder          = 0xA9AEAB;
+constexpr uint32_t ArcThumbActive          = 0x747A76;
+constexpr uint32_t ArcThumbActiveBorder    = 0xD1D5D3;
+constexpr uint32_t ArcThumbReturning       = 0x656A67;
 constexpr uint32_t ArcThumbReturningBorder = 0xA6ACA8;
-constexpr uint32_t Touch = 0x1D211F;
-constexpr uint32_t TouchBorder = 0x686F6B;
-constexpr uint32_t Fingerprint = 0xC9CECB;
-constexpr uint32_t PairingLine = 0x777E7A;
-constexpr uint32_t PairingCore = 0xF7F7EF;
-constexpr uint32_t AgentOff = 0xAEB4B0;
+constexpr uint32_t Touch                   = 0x1D211F;
+constexpr uint32_t TouchBorder             = 0x686F6B;
+constexpr uint32_t Fingerprint             = 0xC9CECB;
+constexpr uint32_t PairingLine             = 0x777E7A;
+constexpr uint32_t PairingCore             = 0xF7F7EF;
+constexpr uint32_t AgentOff                = 0xAEB4B0;
 constexpr lv_style_selector_t PressedStyle =
-    static_cast<lv_style_selector_t>(LV_PART_MAIN) |
-    static_cast<lv_style_selector_t>(LV_STATE_PRESSED);
+    static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_PRESSED);
 
 constexpr std::array<CodexMicroControl, 6> AgentControls = {
     CodexMicroControl::Agent1, CodexMicroControl::Agent2, CodexMicroControl::Agent3,
     CodexMicroControl::Agent4, CodexMicroControl::Agent5, CodexMicroControl::Agent6,
 };
 constexpr std::array<CodexMicroControl, 4> CommandControls = {
-    CodexMicroControl::Fast, CodexMicroControl::Approve, CodexMicroControl::Decline,
+    CodexMicroControl::Fast,
+    CodexMicroControl::Approve,
+    CodexMicroControl::Decline,
     CodexMicroControl::NewChat,
 };
-constexpr float FeedbackToneDurationSeconds = 0.016f;
-constexpr float FeedbackToneVolume = 0.38f;
-constexpr uint16_t FeedbackVibrationDurationMs = 18;
-constexpr uint8_t FeedbackVibrationStrength = 58;
-constexpr float DialRatchetToneDurationSeconds = 0.010f;
-constexpr float DialRatchetToneVolume = 0.30f;
+constexpr float FeedbackToneDurationSeconds       = 0.016f;
+constexpr float FeedbackToneVolume                = 0.38f;
+constexpr uint16_t FeedbackVibrationDurationMs    = 18;
+constexpr uint8_t FeedbackVibrationStrength       = 58;
+constexpr float DialRatchetToneDurationSeconds    = 0.010f;
+constexpr float DialRatchetToneVolume             = 0.30f;
 constexpr uint16_t DialRatchetVibrationDurationMs = 10;
-constexpr uint8_t DialRatchetVibrationStrength = 44;
+constexpr uint8_t DialRatchetVibrationStrength    = 44;
 
-constexpr int DisplayCenter = 233;
-constexpr int JoystickSize = 206;
-constexpr int JoystickKnobSize = 40;
-constexpr int JoystickTravelLimit = 73;
-constexpr int JoystickNeutralPosition = (JoystickSize - JoystickKnobSize) / 2;
-constexpr int DialRadius = 208;
-constexpr int DialStartDegrees = 132;
-constexpr int DialEndDegrees = 408;
-constexpr int DialStepCount = 36;
-constexpr int DialCenterStep = DialStepCount / 2;
-constexpr int DialHitSize = 54;
-constexpr int DialThumbWidth = 46;
-constexpr int DialThumbHeight = 30;
-constexpr uint32_t DialReturnDurationMs = 240;
-constexpr float CommandPathCenter = 174.0f;
-constexpr float CommandCanvasSize = 348.0f;
-constexpr float CommandShadowOffsetY = 4.0f;
-constexpr float CommandShadowStrokeWidth = 5.0f;
-constexpr float CommandBorderStrokeWidth = 2.0f;
-constexpr lv_opa_t CommandShadowFillOpacity = LV_OPA_30;
+constexpr int DisplayCenter                   = 233;
+constexpr int JoystickSize                    = 206;
+constexpr int JoystickKnobSize                = 40;
+constexpr int JoystickTravelLimit             = 73;
+constexpr int JoystickNeutralPosition         = (JoystickSize - JoystickKnobSize) / 2;
+constexpr int DialRadius                      = 208;
+constexpr int DialStartDegrees                = 132;
+constexpr int DialEndDegrees                  = 408;
+constexpr int DialStepCount                   = 36;
+constexpr int DialCenterStep                  = DialStepCount / 2;
+constexpr int DialHitSize                     = 54;
+constexpr int DialThumbWidth                  = 46;
+constexpr int DialThumbHeight                 = 30;
+constexpr uint32_t DialReturnDurationMs       = 240;
+constexpr float CommandPathCenter             = 174.0f;
+constexpr float CommandCanvasSize             = 348.0f;
+constexpr float CommandShadowOffsetY          = 4.0f;
+constexpr float CommandShadowStrokeWidth      = 5.0f;
+constexpr float CommandBorderStrokeWidth      = 2.0f;
+constexpr lv_opa_t CommandShadowFillOpacity   = LV_OPA_30;
 constexpr lv_opa_t CommandShadowStrokeOpacity = LV_OPA_20;
 
 static_assert(AgentControls.size() == 6, "Codex Micro requires six Agent Keys");
@@ -121,8 +122,7 @@ void playFeedback(CodexMicroControl control, int8_t agent = -1)
 {
     const Hal::ButtonConfig& config = GetHAL().getButtonConfig();
     if (config.sfxEnabled) {
-        audio::play_tone_from_midi(feedbackMidi(control, agent),
-                                   FeedbackToneDurationSeconds, FeedbackToneVolume);
+        audio::play_tone_from_midi(feedbackMidi(control, agent), FeedbackToneDurationSeconds, FeedbackToneVolume);
     }
     if (config.vibrateEnabled) {
         GetHAL().vibrate(FeedbackVibrationDurationMs, FeedbackVibrationStrength);
@@ -133,8 +133,7 @@ void playDialRatchetFeedback(int direction)
 {
     const Hal::ButtonConfig& config = GetHAL().getButtonConfig();
     if (config.sfxEnabled) {
-        audio::play_tone_from_midi(direction > 0 ? 84 : 80,
-                                   DialRatchetToneDurationSeconds, DialRatchetToneVolume);
+        audio::play_tone_from_midi(direction > 0 ? 84 : 80, DialRatchetToneDurationSeconds, DialRatchetToneVolume);
     }
     if (config.vibrateEnabled) {
         GetHAL().vibrate(DialRatchetVibrationDurationMs, DialRatchetVibrationStrength);
@@ -143,10 +142,10 @@ void playDialRatchetFeedback(int direction)
 
 uint32_t scaledColor(uint32_t color, float brightness)
 {
-    brightness = std::clamp(brightness, 0.0f, 1.0f);
-    const uint8_t red = static_cast<uint8_t>(((color >> 16) & 0xFF) * brightness);
+    brightness          = std::clamp(brightness, 0.0f, 1.0f);
+    const uint8_t red   = static_cast<uint8_t>(((color >> 16) & 0xFF) * brightness);
     const uint8_t green = static_cast<uint8_t>(((color >> 8) & 0xFF) * brightness);
-    const uint8_t blue = static_cast<uint8_t>((color & 0xFF) * brightness);
+    const uint8_t blue  = static_cast<uint8_t>((color & 0xFF) * brightness);
     return (static_cast<uint32_t>(red) << 16) | (static_cast<uint32_t>(green) << 8) | blue;
 }
 
@@ -160,8 +159,7 @@ bool lightAssigned(const CodexMicroLight& light)
 float animatedBrightness(const CodexMicroLight& light, float seconds)
 {
     float brightness = light.brightness;
-    if (light.effect == CodexMicroLightEffect::Breath ||
-        light.effect == CodexMicroLightEffect::ShallowBreath) {
+    if (light.effect == CodexMicroLightEffect::Breath || light.effect == CodexMicroLightEffect::ShallowBreath) {
         const float speed = light.speed > 0.05f ? light.speed : 1.0f;
         const float depth = light.effect == CodexMicroLightEffect::ShallowBreath ? 0.22f : 0.45f;
         brightness *= (1.0f - depth) + depth * (std::sin(seconds * 3.8f * speed) * 0.5f + 0.5f);
@@ -175,9 +173,9 @@ const char* lightStatus(const CodexMicroLight& light)
         return "Unassigned";
     }
 
-    const int red = (light.color >> 16) & 0xFF;
-    const int green = (light.color >> 8) & 0xFF;
-    const int blue = light.color & 0xFF;
+    const int red       = (light.color >> 16) & 0xFF;
+    const int green     = (light.color >> 8) & 0xFF;
+    const int blue      = light.color & 0xFF;
     const int max_value = std::max({red, green, blue});
     const int min_value = std::min({red, green, blue});
     if (max_value - min_value < 48 && max_value > 150) {
@@ -202,32 +200,31 @@ void drawLine(lv_layer_t* layer, int x1, int y1, int x2, int y2, int width, uint
 {
     lv_draw_line_dsc_t draw;
     lv_draw_line_dsc_init(&draw);
-    draw.color = lv_color_hex(color);
-    draw.width = width;
+    draw.color       = lv_color_hex(color);
+    draw.width       = width;
     draw.round_start = 1;
-    draw.round_end = 1;
-    draw.p1 = {static_cast<lv_value_precise_t>(x1), static_cast<lv_value_precise_t>(y1)};
-    draw.p2 = {static_cast<lv_value_precise_t>(x2), static_cast<lv_value_precise_t>(y2)};
+    draw.round_end   = 1;
+    draw.p1          = {static_cast<lv_value_precise_t>(x1), static_cast<lv_value_precise_t>(y1)};
+    draw.p2          = {static_cast<lv_value_precise_t>(x2), static_cast<lv_value_precise_t>(y2)};
     lv_draw_line(layer, &draw);
 }
 
-void drawArc(lv_layer_t* layer, int x, int y, int radius, int start_angle, int end_angle,
-             int width, uint32_t color, bool rounded = true)
+void drawArc(lv_layer_t* layer, int x, int y, int radius, int start_angle, int end_angle, int width, uint32_t color,
+             bool rounded = true)
 {
     lv_draw_arc_dsc_t draw;
     lv_draw_arc_dsc_init(&draw);
-    draw.color = lv_color_hex(color);
-    draw.width = width;
-    draw.rounded = rounded ? 1 : 0;
-    draw.center = {static_cast<lv_coord_t>(x), static_cast<lv_coord_t>(y)};
-    draw.radius = radius;
+    draw.color       = lv_color_hex(color);
+    draw.width       = width;
+    draw.rounded     = rounded ? 1 : 0;
+    draw.center      = {static_cast<lv_coord_t>(x), static_cast<lv_coord_t>(y)};
+    draw.radius      = radius;
     draw.start_angle = start_angle;
-    draw.end_angle = end_angle;
+    draw.end_angle   = end_angle;
     lv_draw_arc(layer, &draw);
 }
 
-lv_fpoint_t commandPathPoint(int center_x, int center_y, float x, float y,
-                             uint8_t quarter_turns)
+lv_fpoint_t commandPathPoint(int center_x, int center_y, float x, float y, uint8_t quarter_turns)
 {
     const float dx = x - CommandPathCenter;
     const float dy = y - CommandPathCenter;
@@ -243,12 +240,9 @@ lv_fpoint_t commandPathPoint(int center_x, int center_y, float x, float y,
     }
 }
 
-void buildCommandSegmentPath(lv_vector_path_t* path, int center_x, int center_y,
-                             uint8_t quarter_turns)
+void buildCommandSegmentPath(lv_vector_path_t* path, int center_x, int center_y, uint8_t quarter_turns)
 {
-    const auto point = [=](float x, float y) {
-        return commandPathPoint(center_x, center_y, x, y, quarter_turns);
-    };
+    const auto point  = [=](float x, float y) { return commandPathPoint(center_x, center_y, x, y, quarter_turns); };
     const auto moveTo = [&](float x, float y) {
         const lv_fpoint_t target = point(x, y);
         lv_vector_path_move_to(path, &target);
@@ -259,7 +253,7 @@ void buildCommandSegmentPath(lv_vector_path_t* path, int center_x, int center_y,
     };
     const auto quadTo = [&](float control_x, float control_y, float x, float y) {
         const lv_fpoint_t control = point(control_x, control_y);
-        const lv_fpoint_t target = point(x, y);
+        const lv_fpoint_t target  = point(x, y);
         lv_vector_path_quad_to(path, &control, &target);
     };
     const auto arcTo = [&](float radius, bool clockwise, float x, float y) {
@@ -280,16 +274,15 @@ void buildCommandSegmentPath(lv_vector_path_t* path, int center_x, int center_y,
     lv_vector_path_close(path);
 }
 
-void drawOutline(lv_layer_t* layer, int x1, int y1, int x2, int y2, int radius,
-                 int width, uint32_t color)
+void drawOutline(lv_layer_t* layer, int x1, int y1, int x2, int y2, int radius, int width, uint32_t color)
 {
     lv_draw_rect_dsc_t draw;
     lv_draw_rect_dsc_init(&draw);
-    draw.bg_opa = LV_OPA_TRANSP;
+    draw.bg_opa       = LV_OPA_TRANSP;
     draw.border_color = lv_color_hex(color);
     draw.border_width = width;
-    draw.radius = radius;
-    lv_area_t area = {x1, y1, x2, y2};
+    draw.radius       = radius;
+    lv_area_t area    = {x1, y1, x2, y2};
     lv_draw_rect(layer, &draw, &area);
 }
 
@@ -308,8 +301,7 @@ CodexMicroView::~CodexMicroView()
     }
 }
 
-void CodexMicroView::stylePanel(lv_obj_t* object, uint32_t background, uint32_t border,
-                                int radius, int border_width)
+void CodexMicroView::stylePanel(lv_obj_t* object, uint32_t background, uint32_t border, int radius, int border_width)
 {
     lv_obj_set_style_bg_color(object, lv_color_hex(background), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(object, LV_OPA_COVER, LV_PART_MAIN);
@@ -385,14 +377,13 @@ void CodexMicroView::init(lv_obj_t* parent)
     _icon_contexts[4] = {.owner = this, .icon = Icon::Mic};
     lv_obj_add_event_cb(mic_icon, iconEvent, LV_EVENT_DRAW_MAIN, &_icon_contexts[4]);
 
-    constexpr int MicMeterLeft = 165;
+    constexpr int MicMeterLeft    = 165;
     constexpr int MicMeterCenterY = 307;
-    constexpr int MicBarPitch = 17;
+    constexpr int MicBarPitch     = 17;
     for (std::size_t index = 0; index < _mic_bars.size(); ++index) {
         _mic_bars[index] = lv_obj_create(_mic_screen);
         lv_obj_remove_flag(_mic_bars[index], LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_pos(_mic_bars[index], MicMeterLeft + static_cast<int>(index) * MicBarPitch,
-                       MicMeterCenterY - 3);
+        lv_obj_set_pos(_mic_bars[index], MicMeterLeft + static_cast<int>(index) * MicBarPitch, MicMeterCenterY - 3);
         lv_obj_set_size(_mic_bars[index], 8, 6);
         stylePanel(_mic_bars[index], Text, Text, 4, 0);
         lv_obj_set_style_opa(_mic_bars[index], LV_OPA_30, LV_PART_MAIN);
@@ -455,10 +446,9 @@ lv_obj_t* CodexMicroView::createPageRoot()
 }
 
 lv_obj_t* CodexMicroView::createKeyButton(lv_obj_t* parent, std::array<lv_obj_t*, 6>& buttons,
-                                         std::array<KeyContext, 6>& contexts, std::size_t slot,
-                                         int x, int y, int width, int height,
-                                         CodexMicroControl control, int8_t agent, uint32_t background,
-                                         uint32_t border, int radius)
+                                          std::array<KeyContext, 6>& contexts, std::size_t slot, int x, int y,
+                                          int width, int height, CodexMicroControl control, int8_t agent,
+                                          uint32_t background, uint32_t border, int radius)
 {
     lv_obj_t* button = lv_button_create(parent);
     lv_obj_set_pos(button, x, y);
@@ -472,7 +462,7 @@ lv_obj_t* CodexMicroView::createKeyButton(lv_obj_t* parent, std::array<lv_obj_t*
     lv_obj_set_style_shadow_opa(button, LV_OPA_20, LV_PART_MAIN);
     lv_obj_set_style_shadow_color(button, lv_color_hex(0x000000), LV_PART_MAIN);
 
-    buttons[slot] = button;
+    buttons[slot]  = button;
     contexts[slot] = {.owner = this, .control = control, .agent = agent, .active = false};
     lv_obj_add_event_cb(button, keyEvent, LV_EVENT_PRESSED, &contexts[slot]);
     lv_obj_add_event_cb(button, keyEvent, LV_EVENT_RELEASED, &contexts[slot]);
@@ -480,8 +470,7 @@ lv_obj_t* CodexMicroView::createKeyButton(lv_obj_t* parent, std::array<lv_obj_t*
     return button;
 }
 
-void CodexMicroView::createCommandButton(lv_obj_t* parent, std::size_t slot, int x, int y,
-                                         int width, int height,
+void CodexMicroView::createCommandButton(lv_obj_t* parent, std::size_t slot, int x, int y, int width, int height,
                                          int radius, CodexMicroControl control, Icon icon)
 {
     lv_obj_t* button = lv_button_create(parent);
@@ -509,14 +498,10 @@ void CodexMicroView::renderCommand(lv_obj_t* parent)
     }
     lv_obj_add_event_cb(parent, commandDeckEvent, LV_EVENT_DRAW_MAIN, this);
 
-    createCommandButton(parent, 0, 165, 47, 136, 116, 38,
-                        CommandControls[0], Icon::Fast);
-    createCommandButton(parent, 1, 47, 165, 116, 136, 38,
-                        CommandControls[1], Icon::Approve);
-    createCommandButton(parent, 2, 303, 165, 116, 136, 38,
-                        CommandControls[2], Icon::Decline);
-    createCommandButton(parent, 3, 165, 303, 136, 116, 38,
-                        CommandControls[3], Icon::NewChat);
+    createCommandButton(parent, 0, 165, 47, 136, 116, 38, CommandControls[0], Icon::Fast);
+    createCommandButton(parent, 1, 47, 165, 116, 136, 38, CommandControls[1], Icon::Approve);
+    createCommandButton(parent, 2, 303, 165, 116, 136, 38, CommandControls[2], Icon::Decline);
+    createCommandButton(parent, 3, 165, 303, 136, 116, 38, CommandControls[3], Icon::NewChat);
 
     renderNavigation(parent);
 }
@@ -524,13 +509,12 @@ void CodexMicroView::renderCommand(lv_obj_t* parent)
 void CodexMicroView::renderAgent(lv_obj_t* parent)
 {
     for (std::size_t index = 0; index < AgentControls.size(); ++index) {
-        const int row = static_cast<int>(index / 2);
-        const int col = static_cast<int>(index % 2);
-        const int x = 48 + col * 191;
-        const int y = 104 + row * 88;
-        lv_obj_t* button = createKeyButton(parent, _agent_buttons, _agent_contexts, index,
-                                           x, y, 179, 78, AgentControls[index],
-                                           static_cast<int8_t>(index), Key, KeyBorder, 28);
+        const int row    = static_cast<int>(index / 2);
+        const int col    = static_cast<int>(index % 2);
+        const int x      = 48 + col * 191;
+        const int y      = 104 + row * 88;
+        lv_obj_t* button = createKeyButton(parent, _agent_buttons, _agent_contexts, index, x, y, 179, 78,
+                                           AgentControls[index], static_cast<int8_t>(index), Key, KeyBorder, 28);
 
         lv_obj_t* title = lv_label_create(button);
         lv_label_set_text_fmt(title, "Agent %d", static_cast<int>(index + 1));
@@ -557,8 +541,7 @@ void CodexMicroView::renderNavigation(lv_obj_t* parent)
     lv_obj_add_event_cb(parent, dialTrackEvent, LV_EVENT_DRAW_MAIN, this);
 
     _joystick = lv_obj_create(parent);
-    lv_obj_set_pos(_joystick, DisplayCenter - JoystickSize / 2,
-                   DisplayCenter - JoystickSize / 2);
+    lv_obj_set_pos(_joystick, DisplayCenter - JoystickSize / 2, DisplayCenter - JoystickSize / 2);
     lv_obj_set_size(_joystick, JoystickSize, JoystickSize);
     lv_obj_add_flag(_joystick, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_remove_flag(_joystick, LV_OBJ_FLAG_SCROLLABLE);
@@ -666,7 +649,7 @@ void CodexMicroView::setMicActive(bool active)
 
     _mic_active = active;
     if (_mic_active) {
-        _mic_smoothed_level = 0.18f;
+        _mic_smoothed_level   = 0.18f;
         _mic_last_update_tick = 0;
         lv_obj_remove_flag(_mic_screen, LV_OBJ_FLAG_HIDDEN);
         lv_obj_move_foreground(_mic_screen);
@@ -711,20 +694,15 @@ void CodexMicroView::updateConnection(const CodexMicroState& state)
         const std::size_t active_dot = static_cast<std::size_t>((lv_tick_get() / 350U) % _pairing_dots.size());
         for (std::size_t index = 0; index < _pairing_dots.size(); ++index) {
             if (_pairing_dots[index] != nullptr) {
-                lv_obj_set_style_opa(_pairing_dots[index],
-                                     index == active_dot ? LV_OPA_COVER : LV_OPA_30,
+                lv_obj_set_style_opa(_pairing_dots[index], index == active_dot ? LV_OPA_COVER : LV_OPA_30,
                                      LV_PART_MAIN);
             }
         }
         if (_pairing_core != nullptr) {
-            lv_obj_set_style_opa(_pairing_core,
-                                 active_dot == 1 ? LV_OPA_60 : LV_OPA_COVER,
-                                 LV_PART_MAIN);
+            lv_obj_set_style_opa(_pairing_core, active_dot == 1 ? LV_OPA_60 : LV_OPA_COVER, LV_PART_MAIN);
         }
         if (_pairing_pulse != nullptr) {
-            lv_obj_set_style_shadow_opa(_pairing_pulse,
-                                        active_dot == 1 ? LV_OPA_20 : LV_OPA_10,
-                                        LV_PART_MAIN);
+            lv_obj_set_style_shadow_opa(_pairing_pulse, active_dot == 1 ? LV_OPA_20 : LV_OPA_10, LV_PART_MAIN);
         }
     }
 }
@@ -741,15 +719,15 @@ void CodexMicroView::updateAmbientLighting(const CodexMicroState& state)
         return;
     }
 
-    const float seconds = static_cast<float>(lv_tick_get()) / 1000.0f;
+    const float seconds    = static_cast<float>(lv_tick_get()) / 1000.0f;
     const float brightness = animatedBrightness(light, seconds);
-    const uint32_t color = scaledColor(light.color, brightness);
+    const uint32_t color   = scaledColor(light.color, brightness);
     lv_obj_set_style_arc_color(_ambient_ring, lv_color_hex(color), LV_PART_INDICATOR);
     lv_obj_set_style_arc_opa(_ambient_ring, LV_OPA_COVER, LV_PART_INDICATOR);
 
     if (light.effect == CodexMicroLightEffect::Snake) {
         const float speed = light.speed > 0.05f ? light.speed : 0.5f;
-        const int start = static_cast<int>(seconds * (70.0f + 290.0f * speed)) % 360;
+        const int start   = static_cast<int>(seconds * (70.0f + 290.0f * speed)) % 360;
         lv_arc_set_angles(_ambient_ring, start, start + 74);
     } else {
         lv_arc_set_angles(_ambient_ring, 0, 359);
@@ -759,24 +737,21 @@ void CodexMicroView::updateAmbientLighting(const CodexMicroState& state)
 void CodexMicroView::updateCommandLighting(const CodexMicroState& state)
 {
     const CodexMicroLight& light = state.keys;
-    const bool enabled = light.effect != CodexMicroLightEffect::Off && light.color != 0 &&
-                         light.brightness > 0.01f;
-    const float seconds = static_cast<float>(lv_tick_get()) / 1000.0f;
+    const bool enabled     = light.effect != CodexMicroLightEffect::Off && light.color != 0 && light.brightness > 0.01f;
+    const float seconds    = static_cast<float>(lv_tick_get()) / 1000.0f;
     const float brightness = animatedBrightness(light, seconds);
-    const uint32_t color = enabled ? scaledColor(light.color, brightness) : 0xFFFFFA;
-    int snake_slot = -1;
+    const uint32_t color   = enabled ? scaledColor(light.color, brightness) : 0xFFFFFA;
+    int snake_slot         = -1;
     if (enabled && light.effect == CodexMicroLightEffect::Snake) {
         const float speed = light.speed > 0.05f ? light.speed : 0.5f;
-        snake_slot = static_cast<int>(seconds * (2.0f + 6.0f * speed)) %
-                     static_cast<int>(CommandControls.size());
+        snake_slot = static_cast<int>(seconds * (2.0f + 6.0f * speed)) % static_cast<int>(CommandControls.size());
     }
 
     bool visuals_changed = _page_dirty;
     for (std::size_t i = 0; i < CommandControls.size(); ++i) {
-        const bool lit = enabled && (snake_slot < 0 || static_cast<int>(i) == snake_slot);
-        visuals_changed = visuals_changed || _command_lit[i] != lit ||
-                          _command_light_colors[i] != color;
-        _command_lit[i] = lit;
+        const bool lit           = enabled && (snake_slot < 0 || static_cast<int>(i) == snake_slot);
+        visuals_changed          = visuals_changed || _command_lit[i] != lit || _command_light_colors[i] != color;
+        _command_lit[i]          = lit;
         _command_light_colors[i] = color;
     }
     if (visuals_changed && _page_roots[static_cast<std::size_t>(Page::Command)] != nullptr) {
@@ -789,10 +764,10 @@ void CodexMicroView::updateAgentLights(const CodexMicroState& state)
     const float seconds = static_cast<float>(lv_tick_get()) / 1000.0f;
     for (std::size_t i = 0; i < state.threads.size(); ++i) {
         const CodexMicroLight& light = state.threads[i];
-        const float brightness = animatedBrightness(light, seconds);
-        const bool assigned = lightAssigned(light);
-        const bool visible = assigned && light.brightness > 0.01f;
-        const uint32_t color = visible ? scaledColor(light.color, brightness) : AgentOff;
+        const float brightness       = animatedBrightness(light, seconds);
+        const bool assigned          = lightAssigned(light);
+        const bool visible           = assigned && light.brightness > 0.01f;
+        const uint32_t color         = visible ? scaledColor(light.color, brightness) : AgentOff;
         if (_agent_dots[i] != nullptr) {
             stylePanel(_agent_dots[i], color, visible ? color : 0x979E9A, LV_RADIUS_CIRCLE, 1);
             lv_obj_set_style_shadow_width(_agent_dots[i], visible ? 4 : 0, LV_PART_MAIN);
@@ -822,13 +797,13 @@ void CodexMicroView::updateMicMeter()
     // Codex Micro reports push-to-talk state but does not send the host mic
     // amplitude back to the device. Keep the same smooth activity motion as
     // the reviewed HTML until the protocol exposes a real level value.
-    const float phase = static_cast<float>(tick) * 0.0045833333f;
-    const float base = 0.24f + (std::sin(phase) + 1.0f) * 0.17f;
-    const float detail = (std::sin(phase * 2.31f + 0.7f) + 1.0f) * 0.17f;
+    const float phase     = static_cast<float>(tick) * 0.0045833333f;
+    const float base      = 0.24f + (std::sin(phase) + 1.0f) * 0.17f;
+    const float detail    = (std::sin(phase * 2.31f + 0.7f) + 1.0f) * 0.17f;
     const float raw_level = std::min(1.0f, base + detail);
     _mic_smoothed_level += (raw_level - _mic_smoothed_level) * 0.38f;
 
-    constexpr float Center = 4.0f;
+    constexpr float Center        = 4.0f;
     constexpr int MicMeterCenterY = 307;
     for (std::size_t index = 0; index < _mic_bars.size(); ++index) {
         lv_obj_t* bar = _mic_bars[index];
@@ -836,10 +811,9 @@ void CodexMicroView::updateMicMeter()
             continue;
         }
         const float falloff = std::fabs(static_cast<float>(index) - Center) / Center;
-        const float ripple = 0.76f + std::sin(phase * 1.35f + static_cast<float>(index) * 0.8f) * 0.24f;
-        const float amount = std::clamp(_mic_smoothed_level * ripple * (1.0f - falloff * 0.28f),
-                                        0.12f, 1.0f);
-        const int height = std::max(6, static_cast<int>(std::lround(54.0f * amount)));
+        const float ripple  = 0.76f + std::sin(phase * 1.35f + static_cast<float>(index) * 0.8f) * 0.24f;
+        const float amount  = std::clamp(_mic_smoothed_level * ripple * (1.0f - falloff * 0.28f), 0.12f, 1.0f);
+        const int height    = std::max(6, static_cast<int>(std::lround(54.0f * amount)));
         lv_obj_set_y(bar, MicMeterCenterY - height / 2);
         lv_obj_set_height(bar, height);
         lv_obj_set_style_opa(bar, static_cast<lv_opa_t>(89 + amount * 166.0f), LV_PART_MAIN);
@@ -851,10 +825,8 @@ void CodexMicroView::update(const CodexMicroState& state)
     const uint32_t tick = lv_tick_get();
     updateDialReturn();
     updateMicMeter();
-    const bool state_changed = state.revision != _last_state_revision;
-    const int8_t connection_phase = !state.connected
-                                        ? static_cast<int8_t>((tick / 350U) % 3U)
-                                        : 3;
+    const bool state_changed      = state.revision != _last_state_revision;
+    const int8_t connection_phase = !state.connected ? static_cast<int8_t>((tick / 350U) % 3U) : 3;
     if (state_changed || connection_phase != _last_connection_phase) {
         updateConnection(state);
         _last_connection_phase = connection_phase;
@@ -880,8 +852,8 @@ void CodexMicroView::update(const CodexMicroState& state)
             updateCommandLighting(state);
         }
     } else if (_page == Page::Agent) {
-        const bool threads_animated = std::any_of(
-            state.threads.begin(), state.threads.end(), [](const CodexMicroLight& light) {
+        const bool threads_animated =
+            std::any_of(state.threads.begin(), state.threads.end(), [](const CodexMicroLight& light) {
                 return light.effect == CodexMicroLightEffect::Breath ||
                        light.effect == CodexMicroLightEffect::ShallowBreath;
             });
@@ -889,7 +861,7 @@ void CodexMicroView::update(const CodexMicroState& state)
             updateAgentLights(state);
         }
     }
-    _page_dirty = false;
+    _page_dirty          = false;
     _last_state_revision = state.revision;
 }
 
@@ -952,7 +924,7 @@ void CodexMicroView::commandDeckEvent(lv_event_t* event)
         return;
     }
 
-    lv_obj_t* object = lv_event_get_target_obj(event);
+    lv_obj_t* object  = lv_event_get_target_obj(event);
     lv_layer_t* layer = lv_event_get_layer(event);
     lv_area_t coords;
     lv_obj_get_coords(object, &coords);
@@ -960,7 +932,7 @@ void CodexMicroView::commandDeckEvent(lv_event_t* event)
     const int center_y = coords.y1 + DisplayCenter;
 
     lv_draw_vector_dsc_t* vector = lv_draw_vector_dsc_create(layer);
-    lv_vector_path_t* path = owner->_command_path;
+    lv_vector_path_t* path       = owner->_command_path;
     if (vector == nullptr || path == nullptr) {
         ESP_LOGE(Tag, "unable to draw command vector path");
         if (vector != nullptr) {
@@ -973,14 +945,10 @@ void CodexMicroView::commandDeckEvent(lv_event_t* event)
     constexpr std::array<uint8_t, 4> QuarterTurns = {0, 3, 1, 2};
     lv_draw_vector_dsc_set_stroke_join(vector, LV_VECTOR_STROKE_JOIN_ROUND);
     for (std::size_t index = 0; index < QuarterTurns.size(); ++index) {
-        const bool active = owner->_command_contexts[index].active;
-        const uint32_t border = owner->_command_lit[index]
-                                    ? owner->_command_light_colors[index]
-                                    : KeyBorder;
+        const bool active     = owner->_command_contexts[index].active;
+        const uint32_t border = owner->_command_lit[index] ? owner->_command_light_colors[index] : KeyBorder;
 
-        buildCommandSegmentPath(path, center_x,
-                                center_y + static_cast<int>(CommandShadowOffsetY),
-                                QuarterTurns[index]);
+        buildCommandSegmentPath(path, center_x, center_y + static_cast<int>(CommandShadowOffsetY), QuarterTurns[index]);
         lv_draw_vector_dsc_set_fill_color(vector, lv_color_black());
         lv_draw_vector_dsc_set_fill_opa(vector, CommandShadowFillOpacity);
         lv_draw_vector_dsc_set_stroke_color(vector, lv_color_black());
@@ -991,24 +959,23 @@ void CodexMicroView::commandDeckEvent(lv_event_t* event)
 
         buildCommandSegmentPath(path, center_x, center_y, QuarterTurns[index]);
         lv_grad_stop_t fill_stops[2] = {};
-        fill_stops[0].color = lv_color_hex(active ? KeyPressedHigh : KeyHigh);
-        fill_stops[0].opa = LV_OPA_COVER;
-        fill_stops[0].frac = 0;
-        fill_stops[1].color = lv_color_hex(active ? KeyPressedLow : Key);
-        fill_stops[1].opa = LV_OPA_COVER;
-        fill_stops[1].frac = 255;
+        fill_stops[0].color          = lv_color_hex(active ? KeyPressedHigh : KeyHigh);
+        fill_stops[0].opa            = LV_OPA_COVER;
+        fill_stops[0].frac           = 0;
+        fill_stops[1].color          = lv_color_hex(active ? KeyPressedLow : Key);
+        fill_stops[1].opa            = LV_OPA_COVER;
+        fill_stops[1].frac           = 255;
         const float gradient_start_x = static_cast<float>(center_x) - CommandPathCenter;
         const float gradient_start_y = static_cast<float>(center_y) - CommandPathCenter;
         lv_draw_vector_dsc_set_fill_opa(vector, LV_OPA_COVER);
-        lv_draw_vector_dsc_set_fill_linear_gradient(
-            vector, gradient_start_x, gradient_start_y,
-            gradient_start_x + CommandCanvasSize, gradient_start_y + CommandCanvasSize);
+        lv_draw_vector_dsc_set_fill_linear_gradient(vector, gradient_start_x, gradient_start_y,
+                                                    gradient_start_x + CommandCanvasSize,
+                                                    gradient_start_y + CommandCanvasSize);
         lv_draw_vector_dsc_set_fill_gradient_color_stops(vector, fill_stops, 2);
         lv_draw_vector_dsc_set_fill_gradient_spread(vector, LV_VECTOR_GRADIENT_SPREAD_PAD);
         lv_draw_vector_dsc_set_stroke_color(vector, lv_color_hex(border));
         lv_draw_vector_dsc_set_stroke_width(vector, CommandBorderStrokeWidth);
-        lv_draw_vector_dsc_set_stroke_opa(
-            vector, owner->_command_lit[index] ? LV_OPA_COVER : LV_OPA_TRANSP);
+        lv_draw_vector_dsc_set_stroke_opa(vector, owner->_command_lit[index] ? LV_OPA_COVER : LV_OPA_TRANSP);
         lv_draw_vector_dsc_add_path(vector, path);
         lv_vector_path_clear(path);
     }
@@ -1024,12 +991,12 @@ void CodexMicroView::iconEvent(lv_event_t* event)
         return;
     }
 
-    lv_obj_t* object = lv_event_get_target_obj(event);
+    lv_obj_t* object  = lv_event_get_target_obj(event);
     lv_layer_t* layer = lv_event_get_layer(event);
     lv_area_t coords;
     lv_obj_get_coords(object, &coords);
-    const int cx = (coords.x1 + coords.x2) / 2;
-    const int cy = (coords.y1 + coords.y2) / 2;
+    const int cx         = (coords.x1 + coords.x2) / 2;
+    const int cy         = (coords.y1 + coords.y2) / 2;
     const uint32_t color = context->icon == Icon::Fingerprint
                                ? (lv_obj_has_state(object, LV_STATE_PRESSED) ? Green : Fingerprint)
                                : KeyInk;
@@ -1086,7 +1053,7 @@ void CodexMicroView::dialTrackEvent(lv_event_t* event)
     if (lv_event_get_code(event) != LV_EVENT_DRAW_MAIN) {
         return;
     }
-    lv_obj_t* object = lv_event_get_target_obj(event);
+    lv_obj_t* object  = lv_event_get_target_obj(event);
     lv_layer_t* layer = lv_event_get_layer(event);
     lv_area_t coords;
     lv_obj_get_coords(object, &coords);
@@ -1106,12 +1073,12 @@ void CodexMicroView::updateJoystickFromPoint(const lv_point_t& point)
     }
     lv_area_t coords;
     lv_obj_get_coords(_joystick, &coords);
-    const float dx = static_cast<float>(point.x - (coords.x1 + JoystickSize / 2));
-    const float dy = static_cast<float>(point.y - (coords.y1 + JoystickSize / 2));
+    const float dx            = static_cast<float>(point.x - (coords.x1 + JoystickSize / 2));
+    const float dy            = static_cast<float>(point.y - (coords.y1 + JoystickSize / 2));
     constexpr float MaxTravel = static_cast<float>(JoystickTravelLimit);
-    const float raw_distance = std::hypot(dx, dy);
-    const float distance = std::min(1.0f, raw_distance / MaxTravel);
-    float angle = _joystick_angle;
+    const float raw_distance  = std::hypot(dx, dy);
+    const float distance      = std::min(1.0f, raw_distance / MaxTravel);
+    float angle               = _joystick_angle;
     if (raw_distance >= 0.5f) {
         angle = std::atan2(dy, dx) / 6.28318530718f;
         if (angle < 0.0f) {
@@ -1119,14 +1086,14 @@ void CodexMicroView::updateJoystickFromPoint(const lv_point_t& point)
         }
     }
     const float scale = raw_distance > MaxTravel ? MaxTravel / raw_distance : 1.0f;
-    const int knob_x = JoystickNeutralPosition + static_cast<int>(std::lround(dx * scale));
-    const int knob_y = JoystickNeutralPosition + static_cast<int>(std::lround(dy * scale));
+    const int knob_x  = JoystickNeutralPosition + static_cast<int>(std::lround(dx * scale));
+    const int knob_y  = JoystickNeutralPosition + static_cast<int>(std::lround(dy * scale));
     lv_obj_set_pos(_joystick_knob, knob_x, knob_y);
 
-    const float angle_delta = std::fabs(angle - _joystick_angle);
+    const float angle_delta   = std::fabs(angle - _joystick_angle);
     const float wrapped_delta = std::min(angle_delta, 1.0f - angle_delta);
     if (std::fabs(distance - _joystick_distance) >= 0.025f || wrapped_delta >= 0.01f) {
-        _joystick_angle = angle;
+        _joystick_angle    = angle;
         _joystick_distance = distance;
         GetCodexMicroBle().sendJoystick(angle, distance);
     }
@@ -1137,7 +1104,7 @@ void CodexMicroView::releaseJoystick()
     if (_joystick_active) {
         GetCodexMicroBle().sendJoystick(_joystick_angle, 0.0f);
     }
-    _joystick_active = false;
+    _joystick_active   = false;
     _joystick_distance = 0.0f;
     if (_joystick_knob != nullptr) {
         lv_obj_set_pos(_joystick_knob, JoystickNeutralPosition, JoystickNeutralPosition);
@@ -1180,20 +1147,19 @@ void CodexMicroView::setDialVisualStep(float step)
         return;
     }
     _dial_visual_step = std::clamp(step, 0.0f, static_cast<float>(DialStepCount));
-    const float degrees = static_cast<float>(DialStartDegrees) +
-                          static_cast<float>(DialEndDegrees - DialStartDegrees) *
-                              (_dial_visual_step / static_cast<float>(DialStepCount));
+    const float degrees =
+        static_cast<float>(DialStartDegrees) +
+        static_cast<float>(DialEndDegrees - DialStartDegrees) * (_dial_visual_step / static_cast<float>(DialStepCount));
     const float radians = degrees * 0.01745329252f;
-    const int center_x = DisplayCenter + static_cast<int>(std::lround(std::cos(radians) * DialRadius));
-    const int center_y = DisplayCenter + static_cast<int>(std::lround(std::sin(radians) * DialRadius));
+    const int center_x  = DisplayCenter + static_cast<int>(std::lround(std::cos(radians) * DialRadius));
+    const int center_y  = DisplayCenter + static_cast<int>(std::lround(std::sin(radians) * DialRadius));
     lv_obj_set_pos(_dial, center_x - DialHitSize / 2, center_y - DialHitSize / 2);
 
     float rotation = std::fmod(degrees + 90.0f, 360.0f);
     if (rotation < 0.0f) {
         rotation += 360.0f;
     }
-    lv_obj_set_style_transform_rotation(
-        _dial_thumb, static_cast<int>(std::lround(rotation * 10.0f)), LV_PART_MAIN);
+    lv_obj_set_style_transform_rotation(_dial_thumb, static_cast<int>(std::lround(rotation * 10.0f)), LV_PART_MAIN);
 }
 
 void CodexMicroView::updateDialFromPoint(const lv_point_t& point)
@@ -1203,32 +1169,32 @@ void CodexMicroView::updateDialFromPoint(const lv_point_t& point)
     }
     lv_area_t root_coords;
     lv_obj_get_coords(_root, &root_coords);
-    const float dx = static_cast<float>(point.x - (root_coords.x1 + DisplayCenter));
-    const float dy = static_cast<float>(point.y - (root_coords.y1 + DisplayCenter));
+    const float dx    = static_cast<float>(point.x - (root_coords.x1 + DisplayCenter));
+    const float dy    = static_cast<float>(point.y - (root_coords.y1 + DisplayCenter));
     float raw_degrees = std::atan2(dy, dx) * 57.295779513f;
     if (raw_degrees < 0.0f) {
         raw_degrees += 360.0f;
     }
 
-    const float current_degrees = static_cast<float>(DialStartDegrees) +
-                                  static_cast<float>(DialEndDegrees - DialStartDegrees) *
-                                      (_dial_visual_step / static_cast<float>(DialStepCount));
+    const float current_degrees =
+        static_cast<float>(DialStartDegrees) +
+        static_cast<float>(DialEndDegrees - DialStartDegrees) * (_dial_visual_step / static_cast<float>(DialStepCount));
     float unwrapped = raw_degrees;
     for (float candidate : {raw_degrees - 360.0f, raw_degrees, raw_degrees + 360.0f}) {
         if (std::fabs(candidate - current_degrees) < std::fabs(unwrapped - current_degrees)) {
             unwrapped = candidate;
         }
     }
-    const float clamped_degrees = std::clamp(
-        unwrapped, static_cast<float>(DialStartDegrees), static_cast<float>(DialEndDegrees));
-    const int next_step = static_cast<int>(std::lround(
-        (clamped_degrees - static_cast<float>(DialStartDegrees)) /
-        static_cast<float>(DialEndDegrees - DialStartDegrees) * DialStepCount));
+    const float clamped_degrees =
+        std::clamp(unwrapped, static_cast<float>(DialStartDegrees), static_cast<float>(DialEndDegrees));
+    const int next_step =
+        static_cast<int>(std::lround((clamped_degrees - static_cast<float>(DialStartDegrees)) /
+                                     static_cast<float>(DialEndDegrees - DialStartDegrees) * DialStepCount));
     if (next_step == _dial_step) {
         return;
     }
 
-    _dial_rotating = true;
+    _dial_rotating      = true;
     const int direction = next_step > _dial_step ? 1 : -1;
     while (_dial_step != next_step) {
         rotateDial(direction);
@@ -1243,9 +1209,9 @@ void CodexMicroView::beginDialReturn()
         resetDial();
         return;
     }
-    _dial_returning = true;
+    _dial_returning         = true;
     _dial_return_start_step = _dial_visual_step;
-    _dial_return_tick = lv_tick_get();
+    _dial_return_tick       = lv_tick_get();
     if (_dial_thumb != nullptr) {
         stylePanel(_dial_thumb, ArcThumbReturning, ArcThumbReturningBorder, 9, 2);
     }
@@ -1257,12 +1223,10 @@ void CodexMicroView::updateDialReturn()
         return;
     }
     const uint32_t elapsed = lv_tick_get() - _dial_return_tick;
-    const float progress = std::min(1.0f, static_cast<float>(elapsed) /
-                                             static_cast<float>(DialReturnDurationMs));
-    const float remaining = 1.0f - progress;
-    const float eased = 1.0f - remaining * remaining * remaining;
-    const float step = _dial_return_start_step +
-                       (static_cast<float>(DialCenterStep) - _dial_return_start_step) * eased;
+    const float progress   = std::min(1.0f, static_cast<float>(elapsed) / static_cast<float>(DialReturnDurationMs));
+    const float remaining  = 1.0f - progress;
+    const float eased      = 1.0f - remaining * remaining * remaining;
+    const float step = _dial_return_start_step + (static_cast<float>(DialCenterStep) - _dial_return_start_step) * eased;
     setDialVisualStep(step);
     if (progress >= 1.0f) {
         resetDial();
@@ -1271,10 +1235,10 @@ void CodexMicroView::updateDialReturn()
 
 void CodexMicroView::resetDial()
 {
-    _dial_pressed = false;
-    _dial_rotating = false;
+    _dial_pressed   = false;
+    _dial_rotating  = false;
     _dial_returning = false;
-    _dial_step = DialCenterStep;
+    _dial_step      = DialCenterStep;
     setDialVisualStep(static_cast<float>(DialCenterStep));
     if (_dial_thumb != nullptr) {
         stylePanel(_dial_thumb, ArcThumb, ArcThumbBorder, 9, 2);
@@ -1301,11 +1265,11 @@ void CodexMicroView::releaseDialGesture()
         }
         GetCodexMicroBle().sendKey(CodexMicroControl::EncoderPress, CodexMicroKeyAction::Press);
         _dial_host_press_active = true;
-        _dial_release_tick = lv_tick_get() + (held >= 500U ? 520U : 45U);
+        _dial_release_tick      = lv_tick_get() + (held >= 500U ? 520U : 45U);
         ESP_LOGI(Tag, "arc-slider %s gesture=%ums", held >= 500U ? "settings-hold" : "press",
                  static_cast<unsigned>(held));
     }
-    _dial_pressed = false;
+    _dial_pressed  = false;
     _dial_rotating = false;
     beginDialReturn();
 }
@@ -1321,10 +1285,10 @@ void CodexMicroView::dialEvent(lv_event_t* event)
         return;
     }
     if (code == LV_EVENT_PRESSED) {
-        owner->_dial_returning = false;
-        owner->_dial_step = static_cast<int>(std::lround(owner->_dial_visual_step));
-        owner->_dial_pressed = true;
-        owner->_dial_rotating = false;
+        owner->_dial_returning  = false;
+        owner->_dial_step       = static_cast<int>(std::lround(owner->_dial_visual_step));
+        owner->_dial_pressed    = true;
+        owner->_dial_rotating   = false;
         owner->_dial_press_tick = lv_tick_get();
         if (owner->_dial_thumb != nullptr) {
             owner->stylePanel(owner->_dial_thumb, ArcThumbActive, ArcThumbActiveBorder, 9, 2);
@@ -1354,19 +1318,18 @@ void CodexMicroView::touchEvent(lv_event_t* event)
         return;
     }
     if (code == LV_EVENT_PRESSED) {
-        owner->_touch_pressed = true;
+        owner->_touch_pressed    = true;
         owner->_touch_press_tick = lv_tick_get();
         playFeedback(CodexMicroControl::EncoderPress);
     } else if ((code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) && owner->_touch_pressed) {
-        const uint32_t held = lv_tick_get() - owner->_touch_press_tick;
+        const uint32_t held   = lv_tick_get() - owner->_touch_press_tick;
         owner->_touch_pressed = false;
         if (held >= 3000U) {
             const bool requested = GetCodexMicroBle().resetPairing();
-            ESP_LOGW(Tag, "touch sensor pairing-reset duration=%ums requested=%d",
-                     static_cast<unsigned>(held), requested ? 1 : 0);
+            ESP_LOGW(Tag, "touch sensor pairing-reset duration=%ums requested=%d", static_cast<unsigned>(held),
+                     requested ? 1 : 0);
         } else {
-            ESP_LOGI(Tag, "touch sensor tap duration=%ums (single BLE channel)",
-                     static_cast<unsigned>(held));
+            ESP_LOGI(Tag, "touch sensor tap duration=%ums (single BLE channel)", static_cast<unsigned>(held));
         }
     }
 }

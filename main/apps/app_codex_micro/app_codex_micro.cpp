@@ -32,10 +32,10 @@ void AppCodexMicro::onOpen()
         mclog::tagError(getAppInfo().name, "failed to allocate app state");
         return;
     }
-    _key_manager = std::move(key_manager);
+    _key_manager       = std::move(key_manager);
     _last_ui_update_ms = 0;
-    _mic_host_active = false;
-    _send_host_active = false;
+    _mic_host_active   = false;
+    _send_host_active  = false;
 
     LvglLockGuard lock;
     GetHAL().bootLogo.reset();
@@ -47,8 +47,8 @@ void AppCodexMicro::onRunning()
 {
     GetHAL().updateButtonStates();
     const input::KeyEvent event = _key_manager == nullptr ? input::KeyEvent::None : _key_manager->update(false);
-    const uint32_t now = GetHAL().millis();
-    const bool refresh_due = now - _last_ui_update_ms >= UiRefreshPeriodMs;
+    const uint32_t now          = GetHAL().millis();
+    const bool refresh_due      = now - _last_ui_update_ms >= UiRefreshPeriodMs;
     if (event == input::KeyEvent::None && !refresh_due) {
         return;
     }
@@ -61,18 +61,16 @@ void AppCodexMicro::onRunning()
     _view->update(state);
 
     if (!state.connected) {
-        _mic_host_active = false;
+        _mic_host_active  = false;
         _send_host_active = false;
     }
 
     if (input::hasKeyEvent(event, input::KeyEvent::MicPress) && state.connected) {
-        _mic_host_active = GetCodexMicroBle().sendKey(
-            CodexMicroControl::Mic, CodexMicroKeyAction::Press);
+        _mic_host_active = GetCodexMicroBle().sendKey(CodexMicroControl::Mic, CodexMicroKeyAction::Press);
         _view->setMicActive(_mic_host_active);
     }
     if (input::hasKeyEvent(event, input::KeyEvent::SendPress) && state.connected) {
-        _send_host_active = GetCodexMicroBle().sendKey(
-            CodexMicroControl::Send, CodexMicroKeyAction::Press);
+        _send_host_active = GetCodexMicroBle().sendKey(CodexMicroControl::Send, CodexMicroKeyAction::Press);
     }
     if (input::hasKeyEvent(event, input::KeyEvent::MicRelease)) {
         if (_mic_host_active && state.connected) {

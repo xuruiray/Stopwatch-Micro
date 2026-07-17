@@ -24,6 +24,6 @@ private:
     std::unique_ptr<input::KeyManager> _key_manager;
     std::unique_ptr<view::CodexMicroView> _view;
     uint32_t _last_ui_update_ms = 0;
-    bool _mic_host_active = false;
-    bool _send_host_active = false;
+    bool _mic_host_active       = false;
+    bool _send_host_active      = false;
 };

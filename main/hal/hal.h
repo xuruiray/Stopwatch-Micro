@@ -145,8 +145,7 @@ Hal& GetHAL();
 /** Scoped serialization for LVGL access from the Mooncake task. */
 class LvglLockGuard {
 public:
-    LvglLockGuard()
-        : _locked(GetHAL().lvglLock())
+    LvglLockGuard() : _locked(GetHAL().lvglLock())
     {
     }
     ~LvglLockGuard()
@@ -156,7 +155,7 @@ public:
         }
     }
 
-    LvglLockGuard(const LvglLockGuard&) = delete;
+    LvglLockGuard(const LvglLockGuard&)            = delete;
     LvglLockGuard& operator=(const LvglLockGuard&) = delete;
 
 private:

@@ -36,15 +36,15 @@ public:
         initI2s();
 
         audio_codec_i2s_cfg_t i2s_config = {};
-        i2s_config.rx_handle              = nullptr;
-        i2s_config.tx_handle              = _tx_handle;
-        _data_interface = audio_codec_new_i2s_data(&i2s_config);
+        i2s_config.rx_handle             = nullptr;
+        i2s_config.tx_handle             = _tx_handle;
+        _data_interface                  = audio_codec_new_i2s_data(&i2s_config);
 
         audio_codec_i2c_cfg_t i2c_config = {};
-        i2c_config.addr                   = ES8311_CODEC_DEFAULT_ADDR;
-        i2c_config.bus_handle             = i2c_bus;
-        _control_interface = audio_codec_new_i2c_ctrl(&i2c_config);
-        _gpio_interface    = audio_codec_new_gpio();
+        i2c_config.addr                  = ES8311_CODEC_DEFAULT_ADDR;
+        i2c_config.bus_handle            = i2c_bus;
+        _control_interface               = audio_codec_new_i2c_ctrl(&i2c_config);
+        _gpio_interface                  = audio_codec_new_gpio();
 
         es8311_codec_cfg_t codec_config = {};
         codec_config.ctrl_if            = _control_interface;
@@ -52,7 +52,7 @@ public:
         codec_config.codec_mode         = ESP_CODEC_DEV_WORK_MODE_DAC;
         codec_config.pa_pin             = GPIO_NUM_NC;
         codec_config.use_mclk           = true;
-        _codec_interface = es8311_codec_new(&codec_config);
+        _codec_interface                = es8311_codec_new(&codec_config);
 
         esp_codec_dev_cfg_t device_config = {
             .dev_type = ESP_CODEC_DEV_TYPE_OUT,
@@ -128,8 +128,8 @@ private:
                     _audio_data.clear();
                 }
 
-                bool interrupted = false;
-                std::size_t offset = 0;
+                bool interrupted                   = false;
+                std::size_t offset                 = 0;
                 constexpr std::size_t ChunkSamples = 512;
                 while (offset < current_data.size()) {
                     if (ulTaskNotifyTake(pdTRUE, 0) > 0) {
@@ -139,8 +139,8 @@ private:
 
                     const std::size_t remaining = current_data.size() - offset;
                     const std::size_t count     = std::min(remaining, ChunkSamples);
-                    ESP_ERROR_CHECK(esp_codec_dev_write(
-                        _device, current_data.data() + offset, count * sizeof(int16_t)));
+                    ESP_ERROR_CHECK(
+                        esp_codec_dev_write(_device, current_data.data() + offset, count * sizeof(int16_t)));
                     offset += count;
                 }
 
@@ -156,15 +156,13 @@ private:
 
     void write(const std::vector<int16_t>& data)
     {
-        ESP_ERROR_CHECK(esp_codec_dev_write(
-            _device, const_cast<int16_t*>(data.data()), data.size() * sizeof(int16_t)));
+        ESP_ERROR_CHECK(esp_codec_dev_write(_device, const_cast<int16_t*>(data.data()), data.size() * sizeof(int16_t)));
         writeSilence();
     }
 
     void writeSilence()
     {
-        ESP_ERROR_CHECK(esp_codec_dev_write(
-            _device, _silence_buffer.data(), _silence_buffer.size() * sizeof(int16_t)));
+        ESP_ERROR_CHECK(esp_codec_dev_write(_device, _silence_buffer.data(), _silence_buffer.size() * sizeof(int16_t)));
     }
 
     void initI2s()
@@ -173,8 +171,7 @@ private:
         i2s_chan_config_t channel_config = I2S_CHANNEL_DEFAULT_CONFIG(I2sPort, I2S_ROLE_MASTER);
         i2s_std_config_t standard_config = {};
         standard_config.clk_cfg          = I2S_STD_CLK_DEFAULT_CONFIG(SampleRate);
-        standard_config.slot_cfg =
-            I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO);
+        standard_config.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO);
         standard_config.gpio_cfg.mclk = I2sMclk;
         standard_config.gpio_cfg.bclk = I2sBclk;
         standard_config.gpio_cfg.ws   = I2sLrck;
@@ -186,13 +183,13 @@ private:
         ESP_ERROR_CHECK(i2s_channel_enable(_tx_handle));
     }
 
-    i2s_chan_handle_t _tx_handle = nullptr;
-    esp_codec_dev_handle_t _device = nullptr;
-    const audio_codec_data_if_t* _data_interface = nullptr;
+    i2s_chan_handle_t _tx_handle                    = nullptr;
+    esp_codec_dev_handle_t _device                  = nullptr;
+    const audio_codec_data_if_t* _data_interface    = nullptr;
     const audio_codec_ctrl_if_t* _control_interface = nullptr;
-    const audio_codec_gpio_if_t* _gpio_interface = nullptr;
-    const audio_codec_if_t* _codec_interface = nullptr;
-    TaskHandle_t _task_handle = nullptr;
+    const audio_codec_gpio_if_t* _gpio_interface    = nullptr;
+    const audio_codec_if_t* _codec_interface        = nullptr;
+    TaskHandle_t _task_handle                       = nullptr;
     std::mutex _mutex;
     std::vector<int16_t> _audio_data;
     std::vector<int16_t> _silence_buffer;

@@ -71,8 +71,7 @@ esp_hid_device_config_t HidConfig = {
 };
 
 const uint8_t HidServiceUuid128[] = {
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
-    0x00, 0x10, 0x00, 0x00, 0x12, 0x18, 0x00, 0x00,
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x12, 0x18, 0x00, 0x00,
 };
 
 esp_ble_adv_params_t AdvertisingParams = {
@@ -187,7 +186,8 @@ bool CodexMicroBle::begin()
         return false;
     }
 
-    if (logStepError("esp_ble_gatts_register_callback", esp_ble_gatts_register_callback(esp_hidd_gatts_event_handler))) {
+    if (logStepError("esp_ble_gatts_register_callback",
+                     esp_ble_gatts_register_callback(esp_hidd_gatts_event_handler))) {
         return false;
     }
 
@@ -216,7 +216,7 @@ bool CodexMicroBle::initializeController()
     }
 
     esp_bluedroid_config_t bluedroid_config = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
-    bluedroid_config.ssp_en                  = false;
+    bluedroid_config.ssp_en                 = false;
     if (logStepError("esp_bluedroid_init", esp_bluedroid_init_with_cfg(&bluedroid_config))) {
         return false;
     }
@@ -252,7 +252,7 @@ bool CodexMicroBle::configureAdvertising()
     }
 
     esp_ble_adv_data_t advertising_data = {
-        .set_scan_rsp        = false,
+        .set_scan_rsp = false,
         // The 128-bit HID service UUID leaves no room for the full name in
         // the 31-byte advertising packet, so the name is sent separately in
         // the scan response.
@@ -411,13 +411,13 @@ void CodexMicroBle::onConnected(bool connectedValue)
     xSemaphoreTake(_state_mutex, portMAX_DELAY);
     _state.connected = connectedValue;
     if (!connectedValue) {
-        _state.threads = {};
-        _state.ambient = {};
-        _state.keys = {};
-        _configured_ambient = {};
-        _configured_keys = {};
+        _state.threads       = {};
+        _state.ambient       = {};
+        _state.keys          = {};
+        _configured_ambient  = {};
+        _configured_keys     = {};
         _ambient_sync_thread = -1;
-        _keys_sync_thread = -1;
+        _keys_sync_thread    = -1;
     }
     ++_state.revision;
     xSemaphoreGive(_state_mutex);
@@ -487,7 +487,7 @@ bool CodexMicroBle::resetPairing()
             _pairing_reset_requested.store(false);
             return false;
         }
-        int listed = bond_count;
+        int listed      = bond_count;
         esp_err_t error = esp_ble_get_bond_device_list(&listed, bonds.get());
         if (error != ESP_OK) {
             ESP_LOGE(Tag, "failed to list BLE bonds: %s", esp_err_to_name(error));
@@ -545,8 +545,8 @@ bool CodexMicroBle::sendKey(CodexMicroControl control, CodexMicroKeyAction actio
     }
     cJSON_AddItemToObject(message, "params", params);
     const bool sent = sendJsonObject(message);
-    ESP_LOGI(Tag, "TX key=%s act=%u agent=%d sent=%d", key == nullptr ? "" : key,
-             static_cast<unsigned>(action), static_cast<int>(agent), sent ? 1 : 0);
+    ESP_LOGI(Tag, "TX key=%s act=%u agent=%d sent=%d", key == nullptr ? "" : key, static_cast<unsigned>(action),
+             static_cast<int>(agent), sent ? 1 : 0);
     return sent;
 }
 
@@ -598,10 +598,10 @@ bool CodexMicroBle::sendJson(const char* json)
 
     std::string framed(json);
     framed.push_back('\n');
-    bool success      = true;
+    bool success       = true;
     std::size_t offset = 0;
     while (offset < framed.size()) {
-        std::size_t chunk = std::min(PayloadSize, framed.size() - offset);
+        std::size_t chunk          = std::min(PayloadSize, framed.size() - offset);
         uint8_t report[ReportSize] = {};
         report[0]                  = 2;
         report[1]                  = static_cast<uint8_t>(chunk);
@@ -642,10 +642,10 @@ void CodexMicroBle::onOutput(const uint8_t* data, std::size_t length)
         return;
     }
 
-    const char* payload = reinterpret_cast<const char*>(data + offset + 2);
+    const char* payload             = reinterpret_cast<const char*>(data + offset + 2);
     constexpr char TopLevelPrefix[] = "{\"method\"";
-    bool startsTopLevel = payloadLength >= sizeof(TopLevelPrefix) - 1 &&
-                          std::memcmp(payload, TopLevelPrefix, sizeof(TopLevelPrefix) - 1) == 0;
+    bool startsTopLevel             = payloadLength >= sizeof(TopLevelPrefix) - 1 &&
+                                      std::memcmp(payload, TopLevelPrefix, sizeof(TopLevelPrefix) - 1) == 0;
     if (startsTopLevel && !_rpc_buffer.empty()) {
         _rpc_buffer.clear();
     }
@@ -775,10 +775,11 @@ void CodexMicroBle::updateThreadLighting(const cJSON* values)
     cJSON_ArrayForEach(value, values)
     {
         const cJSON* idValue = objectItem(value, "id");
-        if (!cJSON_IsNumber(idValue) || idValue->valueint < 0 || idValue->valueint >= static_cast<int>(_state.threads.size())) {
+        if (!cJSON_IsNumber(idValue) || idValue->valueint < 0 ||
+            idValue->valueint >= static_cast<int>(_state.threads.size())) {
             continue;
         }
-        const int8_t thread = static_cast<int8_t>(idValue->valueint);
+        const int8_t thread    = static_cast<int8_t>(idValue->valueint);
         CodexMicroLight& light = _state.threads[thread];
         updateLightingSide(light, value);
         const cJSON* sync_keys = objectItem(value, "sk");
@@ -819,11 +820,11 @@ void CodexMicroBle::updateLightingSide(CodexMicroLight& side, const cJSON* value
     if (!cJSON_IsObject(value)) {
         return;
     }
-    const cJSON* color = objectItem(value, "c");
+    const cJSON* color      = objectItem(value, "c");
     const cJSON* brightness = objectItem(value, "b");
-    const cJSON* effect = objectItem(value, "e");
-    const cJSON* speed = objectItem(value, "s");
-    const cJSON* magic = objectItem(value, "m");
+    const cJSON* effect     = objectItem(value, "e");
+    const cJSON* speed      = objectItem(value, "s");
+    const cJSON* magic      = objectItem(value, "m");
     if (cJSON_IsNumber(color)) {
         side.color = static_cast<uint32_t>(color->valuedouble);
     }

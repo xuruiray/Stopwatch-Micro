@@ -35,11 +35,16 @@ not provide microphone amplitude samples to the display.
 
 The reviewable HTML version of the interface lives in [`web/index.html`](web/index.html). It models
 connection, page, touch, joystick, slider, and physical-key interactions without requiring the
-device. After GitHub Pages deployment it is available at:
+device. The included GitHub Pages workflow can publish it at the URL below after Pages is enabled
+for this private repository:
 
 <https://xuruiray.github.io/Stopwatch-Micro/>
 
 Use `?paired=1` to open directly on Command and `?paired=1&mic=1` to preview the Mic state.
+
+GitHub Free does not currently enable Pages for private repositories. The workflow is therefore
+manual-only: keep the repository private, upgrade to a plan with private-repository Pages support,
+enable Pages with GitHub Actions as the source, and run **Deploy web prototype**.
 
 ## Source layout
 

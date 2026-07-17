@@ -247,9 +247,9 @@ Hal::TouchPoint Hal::getTouchPoint()
 static SemaphoreHandle_t xGuiSemaphore;
 static std::atomic<bool> _lvgl_update_enabled = false;
 
-#define LV_BUFFER_LINE 120
+#define LV_BUFFER_LINE          120
 #define LV_TOUCH_READ_PERIOD_MS 16
-constexpr uint32_t LVGL_TASK_STACK_SIZE = 32 * 1024;
+constexpr uint32_t LVGL_TASK_STACK_SIZE    = 32 * 1024;
 constexpr uint32_t LVGL_STACK_SAMPLE_COUNT = 20;
 
 static void lvgl_tick_timer(void *arg)
@@ -341,15 +341,14 @@ void Hal::lvgl_init()
 
     const std::size_t draw_buffer_size = static_cast<std::size_t>(_display->width()) * LV_BUFFER_LINE *
                                          LV_COLOR_FORMAT_GET_SIZE(lv_display_get_color_format(disp));
-    static uint8_t *buf1 = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
-    static uint8_t *buf2 = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
+    static uint8_t *buf1               = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
+    static uint8_t *buf2               = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
     if (buf1 == nullptr || buf2 == nullptr) {
         ESP_LOGE("HAL-Display", "failed to allocate %u-byte LVGL draw buffers",
                  static_cast<unsigned>(draw_buffer_size));
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
-    lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, draw_buffer_size,
-                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, draw_buffer_size, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
     lvTouchpad = lv_indev_create();
     LV_ASSERT_MALLOC(lvTouchpad);
@@ -362,7 +361,7 @@ void Hal::lvgl_init()
     lv_indev_set_display(lvTouchpad, disp);
     lv_timer_set_period(lv_indev_get_read_timer(lvTouchpad), LV_TOUCH_READ_PERIOD_MS);
 
-    xGuiSemaphore                                     = xSemaphoreCreateMutex();
+    xGuiSemaphore = xSemaphoreCreateMutex();
     if (xGuiSemaphore == nullptr) {
         ESP_LOGE("HAL-Display", "failed to create LVGL mutex");
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
@@ -377,8 +376,7 @@ void Hal::lvgl_init()
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 10 * 1000));
-    if (xTaskCreate(lvgl_rtos_task, "lvgl_rtos_task", LVGL_TASK_STACK_SIZE, nullptr, 1, nullptr) !=
-        pdPASS) {
+    if (xTaskCreate(lvgl_rtos_task, "lvgl_rtos_task", LVGL_TASK_STACK_SIZE, nullptr, 1, nullptr) != pdPASS) {
         ESP_LOGE("HAL-Display", "failed to create LVGL task with %u-byte stack",
                  static_cast<unsigned>(LVGL_TASK_STACK_SIZE));
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);

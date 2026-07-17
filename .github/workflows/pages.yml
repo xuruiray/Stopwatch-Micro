@@ -1,12 +1,8 @@
 name: Deploy web prototype
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "web/**"
-      - ".github/workflows/pages.yml"
+  # The repository is private. Enable Pages in repository settings after the
+  # account has a plan that supports private-repository Pages, then run this.
   workflow_dispatch:
 
 permissions:

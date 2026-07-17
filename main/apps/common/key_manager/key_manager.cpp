@@ -15,7 +15,7 @@ KeyEvent KeyManager::update(bool updateButtonStates)
 
     _event = KeyEvent::None;
 
-    Hal& hal = GetHAL();
+    Hal& hal           = GetHAL();
     const uint32_t now = hal.millis();
 
     // The chord owns both keys. If it arrives after a single-key action has
@@ -47,21 +47,21 @@ KeyEvent KeyManager::update(bool updateButtonStates)
 
     if (_pending_key == PendingKey::None) {
         if (hal.btnA.wasPressed()) {
-            _pending_key = PendingKey::Mic;
+            _pending_key   = PendingKey::Mic;
             _pending_since = now;
         } else if (hal.btnB.wasPressed()) {
-            _pending_key = PendingKey::Send;
+            _pending_key   = PendingKey::Send;
             _pending_since = now;
         }
     }
 
     if (_pending_key != PendingKey::None) {
-        const bool is_mic = _pending_key == PendingKey::Mic;
+        const bool is_mic  = _pending_key == PendingKey::Mic;
         const bool pressed = is_mic ? hal.btnA.isPressed() : hal.btnB.isPressed();
         if (!pressed) {
             // Preserve a very short tap that ended inside the chord window.
-            _event |= is_mic ? (KeyEvent::MicPress | KeyEvent::MicRelease)
-                             : (KeyEvent::SendPress | KeyEvent::SendRelease);
+            _event |=
+                is_mic ? (KeyEvent::MicPress | KeyEvent::MicRelease) : (KeyEvent::SendPress | KeyEvent::SendRelease);
             _pending_key = PendingKey::None;
         } else if (now - _pending_since >= ChordWindowMs) {
             if (is_mic) {

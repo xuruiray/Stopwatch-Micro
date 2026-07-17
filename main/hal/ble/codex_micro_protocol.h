@@ -46,9 +46,8 @@ enum class CodexMicroLightEffect : uint8_t {
 };
 
 inline constexpr std::array<const char*, 15> CodexMicroControlCodes = {
-    "AG00", "AG01", "AG02", "AG03", "AG04", "AG05",
-    "ACT06", "ACT07", "ACT08", "ACT09", "ACT10", "ACT12",
-    "ENC", "ENC_CW", "ENC_CC",
+    "AG00",  "AG01",  "AG02",  "AG03",  "AG04", "AG05",   "ACT06",  "ACT07",
+    "ACT08", "ACT09", "ACT10", "ACT12", "ENC",  "ENC_CW", "ENC_CC",
 };
 
 static_assert(CodexMicroControlCodes.size() ==

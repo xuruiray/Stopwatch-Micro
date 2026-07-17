@@ -23,21 +23,21 @@
 struct cJSON;
 
 struct CodexMicroLight {
-    uint32_t color    = 0;
-    float brightness = 0.0f;
+    uint32_t color               = 0;
+    float brightness             = 0.0f;
     CodexMicroLightEffect effect = CodexMicroLightEffect::Off;
-    float speed       = 0.0f;
-    uint32_t magic    = 0;
+    float speed                  = 0.0f;
+    uint32_t magic               = 0;
 };
 
 struct CodexMicroState {
     std::array<CodexMicroLight, 6> threads = {};
     CodexMicroLight ambient;
     CodexMicroLight keys;
-    bool ready       = false;
-    bool connected   = false;
-    uint8_t battery  = 100;
-    bool charging    = false;
+    bool ready        = false;
+    bool connected    = false;
+    uint8_t battery   = 100;
+    bool charging     = false;
     uint32_t revision = 0;
 };
 
@@ -53,9 +53,9 @@ public:
     bool sendJoystick(float angle, float distance);
 
 private:
-    static constexpr uint8_t ReportId      = 6;
-    static constexpr std::size_t ReportSize = 63;
-    static constexpr std::size_t PayloadSize = 61;
+    static constexpr uint8_t ReportId             = 6;
+    static constexpr std::size_t ReportSize       = 63;
+    static constexpr std::size_t PayloadSize      = 61;
     static constexpr std::size_t MaxRpcBufferSize = 4096;
 
     static void gapEventCallback(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t* param);
@@ -77,22 +77,22 @@ private:
     void sendSuccess(const cJSON* id);
     void setReady(bool ready);
 
-    esp_hidd_dev_t* _hid_device = nullptr;
+    esp_hidd_dev_t* _hid_device    = nullptr;
     SemaphoreHandle_t _state_mutex = nullptr;
-    SemaphoreHandle_t _tx_mutex = nullptr;
+    SemaphoreHandle_t _tx_mutex    = nullptr;
     CodexMicroState _state;
     CodexMicroLight _configured_ambient;
     CodexMicroLight _configured_keys;
     std::string _rpc_buffer;
-    int8_t _ambient_sync_thread = -1;
-    int8_t _keys_sync_thread = -1;
-    std::atomic_bool _initialized = false;
-    std::atomic_bool _adv_data_ready = false;
-    std::atomic_bool _scan_rsp_ready = false;
-    std::atomic_bool _hid_ready = false;
-    std::atomic_bool _advertising = false;
+    int8_t _ambient_sync_thread               = -1;
+    int8_t _keys_sync_thread                  = -1;
+    std::atomic_bool _initialized             = false;
+    std::atomic_bool _adv_data_ready          = false;
+    std::atomic_bool _scan_rsp_ready          = false;
+    std::atomic_bool _hid_ready               = false;
+    std::atomic_bool _advertising             = false;
     std::atomic_bool _pairing_reset_requested = false;
-    std::atomic_int _pairing_bonds_pending = 0;
+    std::atomic_int _pairing_bonds_pending    = 0;
 };
 
 CodexMicroBle& GetCodexMicroBle();

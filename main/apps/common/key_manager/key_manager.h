@@ -51,12 +51,12 @@ private:
 
     static constexpr uint32_t ChordWindowMs = 50;
 
-    KeyEvent _event = KeyEvent::None;
+    KeyEvent _event         = KeyEvent::None;
     PendingKey _pending_key = PendingKey::None;
     uint32_t _pending_since = 0;
-    bool _mic_active = false;
-    bool _send_active = false;
-    bool _combo_latched = false;
+    bool _mic_active        = false;
+    bool _send_active       = false;
+    bool _combo_latched     = false;
 };
 
 }  // namespace input

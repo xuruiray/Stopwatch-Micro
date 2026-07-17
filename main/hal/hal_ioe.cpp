@@ -139,8 +139,8 @@ static class Vibrator {
 public:
     bool init()
     {
-        if (xTaskCreate([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024,
-                        this, 5, &_task_handle) != pdPASS) {
+        if (xTaskCreate([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024, this, 5,
+                        &_task_handle) != pdPASS) {
             mclog::tagError(_tag, "failed to create vibrator task");
             return false;
         }
