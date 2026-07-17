@@ -5,6 +5,11 @@ Codex Micro-compatible controller. It boots directly into a two-page LVGL interf
 Bluetooth Low Energy active as a system service; the original Mooncake launcher and demo apps are
 not included.
 
+![Stopwatch Micro running the Command interface](docs/assets/stopwatch-micro-hero.png)
+
+_Concept product image generated from the project UI and the physical form shown on the
+[official M5Stack StopWatch product page](https://shop.m5stack.com/products/m5stack-stopwatch-dev-kit-esp32-s3)._
+
 > This project implements an unofficial compatibility layer for a protocol that is not a stable
 > public API. A future ChatGPT update may require corresponding firmware changes.
 
@@ -20,8 +25,8 @@ returns immediately to Pairing.
 | Command left | `ACT07` | Approve |
 | Command right | `ACT08` | Decline |
 | Command bottom | `ACT09` | Fork |
-| Physical A | `ACT10` | Hold for Mic; release to stop |
-| Physical B | `ACT12` | Send |
+| Yellow physical A | `ACT10` | Hold for Mic; release to stop |
+| Blue physical B | `ACT12` | Send |
 | Physical A + B | local UI | Toggle Command and Agent |
 | Agent 1–6 | `AG00`–`AG05` | Select the corresponding agent/thread |
 | Arc slider | `ENC_CC`, `ENC`, `ENC_CW` | Previous, press/select, next; returns to center |
@@ -38,9 +43,12 @@ connection, page, touch, joystick, slider, and physical-key interactions without
 device. The included GitHub Pages workflow can publish it at the URL below after Pages is enabled
 for this private repository:
 
+![Stopwatch Micro Command UI preview](docs/assets/stopwatch-micro-ui.png)
+
 <https://xuruiray.github.io/Stopwatch-Micro/>
 
-Use `?paired=1` to open directly on Command and `?paired=1&mic=1` to preview the Mic state.
+Command is the default preview. Use `?paired=0` to show Pairing and `?mic=1` to preview the Mic
+state. The yellow and blue on-screen hardware buttons also support simultaneous A+B page switching.
 
 GitHub Free does not currently enable Pages for private repositories. The workflow is therefore
 manual-only: keep the repository private, upgrade to a plan with private-repository Pages support,

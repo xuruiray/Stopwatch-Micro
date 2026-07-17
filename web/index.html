@@ -37,7 +37,7 @@
       margin: 0;
       display: grid;
       place-items: center;
-      padding: 42px 28px;
+      padding: 24px;
       overflow-x: hidden;
       color: var(--ink);
       background: #0a0d0b;
@@ -46,15 +46,20 @@
     button { font: inherit; }
 
     .review-layout {
-      width: min(100%, 1020px);
-      display: grid;
-      grid-template-columns: 466px minmax(300px, 1fr);
-      align-items: center;
-      gap: 68px;
+      display: block;
+      width: 556px;
+      height: 520px;
     }
-    .device-stage { width: 466px; }
-    .device {
+    .device-stage {
       position: relative;
+      width: 556px;
+      height: 520px;
+    }
+    .device {
+      position: absolute;
+      left: 45px;
+      top: 27px;
+      z-index: 2;
       width: 466px;
       height: 466px;
       overflow: hidden;
@@ -492,97 +497,54 @@
     @keyframes pairing-core { 50% { opacity: .58; transform: scale(.78); } }
     @keyframes pairing-dot { 0%, 70%, 100% { opacity: .28; } 35% { opacity: 1; } }
 
-    .review-notes .kicker { margin-bottom: 14px; color: var(--green); font-size: 11px; font-weight: 850; letter-spacing: .22em; text-transform: uppercase; }
-    .review-notes h1 { margin: 0; max-width: 440px; font-size: clamp(31px,5vw,49px); line-height: 1.02; letter-spacing: -.035em; }
-    .review-notes p { max-width: 440px; margin: 20px 0 0; color: #aab2ae; font-size: 15px; line-height: 1.72; }
-    .feature-list { display: grid; gap: 9px; margin-top: 22px; color: #87918c; font-size: 12px; }
-    .feature-list span { padding-left: 13px; border-left: 2px solid #2b3530; }
-    .dial-mode-preview { margin-top: 24px; }
-    .dial-mode-preview > span {
-      display: block;
-      margin-bottom: 9px;
-      color: #6e7772;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-    .dial-mode-options { display: flex; gap: 8px; }
-    .dial-mode-option {
-      min-height: 39px;
-      padding: 0 14px;
-      border: 1px solid #303934;
-      border-radius: 13px;
-      color: #89928d;
-      background: #121714;
-      font-size: 11px;
-      font-weight: 780;
-      cursor: pointer;
-      transition: color .12s ease, border-color .12s ease, background .12s ease;
-    }
-    .dial-mode-option:hover { border-color: #53615a; color: var(--ink); }
-    .dial-mode-option.active {
-      border-color: rgba(89,227,165,.62);
-      color: var(--green);
-      background: rgba(89,227,165,.08);
-    }
-    .pairing-preview { margin-top: 18px; }
-    .pairing-preview > span {
-      display: block;
-      margin-bottom: 9px;
-      color: #6e7772;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-    .pairing-preview-controls { display: flex; gap: 8px; }
-    .pairing-preview-button {
-      min-height: 39px;
-      padding: 0 14px;
-      border: 1px solid #303934;
-      border-radius: 13px;
-      color: #dce2df;
-      background: #121714;
-      font-size: 11px;
-      font-weight: 780;
-      cursor: pointer;
-    }
-    .pairing-preview-button.disconnect { color: #d56a70; }
-    .pairing-preview-button:disabled { opacity: .32; cursor: not-allowed; }
-    .external-controls { display: flex; align-items: center; gap: 12px; margin-top: 27px; }
     .hardware-key {
-      min-width: 96px;
-      min-height: 64px;
-      border: 1px solid #3a433f;
-      border-radius: 20px;
-      color: var(--ink);
-      background: #171c19;
-      font-size: 16px;
-      font-weight: 850;
+      position: absolute;
+      top: 103px;
+      z-index: 3;
+      width: 38px;
+      height: 82px;
+      padding: 0;
+      border: 2px solid rgba(255,255,255,.25);
+      border-radius: 13px;
       cursor: pointer;
       touch-action: manipulation;
-      transition: transform .08s ease, border-color .12s ease;
+      box-shadow: inset 0 2px 2px rgba(255,255,255,.28), inset 0 -4px 6px rgba(0,0,0,.18), 0 8px 17px rgba(0,0,0,.38);
+      transition: transform .08s ease, filter .12s ease, opacity .12s ease;
     }
-    .hardware-key:active, .hardware-key.held { transform: translateY(2px); border-color: var(--green); }
-    .hardware-key:disabled { opacity: .28; cursor: not-allowed; }
-    .hardware-key.combo { min-width: 124px; color: var(--green); font-size: 11px; letter-spacing: .06em; }
-    .shortcut-note { margin-top: 12px; color: #6e7772; font-size: 11px; letter-spacing: .04em; }
+    .hardware-key.key-a {
+      left: 26px;
+      background: linear-gradient(145deg, #ffd55b, #efaa24 76%);
+      transform: rotate(-17deg);
+    }
+    .hardware-key.key-b {
+      right: 26px;
+      background: linear-gradient(145deg, #75b9ff, #3d82e8 76%);
+      transform: rotate(17deg);
+    }
+    .hardware-key.key-a:active,
+    .hardware-key.key-a.held { transform: rotate(-17deg) scale(.9); filter: brightness(1.13); }
+    .hardware-key.key-b:active,
+    .hardware-key.key-b.held { transform: rotate(17deg) scale(.9); filter: brightness(1.13); }
+    .hardware-key:disabled { opacity: .55; cursor: not-allowed; }
 
-    body.embed { width: 466px; height: 466px; min-height: 466px; padding: 0; overflow: hidden; background: #080b09; }
-    body.embed .review-layout { display: block; width: 466px; height: 466px; }
-    body.embed .review-notes { display: none; }
-    body.embed .device { box-shadow: none; }
+    body.embed { width: 556px; height: 520px; min-height: 520px; padding: 0; overflow: hidden; background: #080b09; }
+    body.embed .review-layout,
+    body.embed .device-stage { width: 556px; height: 520px; }
+    body.embed .device { box-shadow: 0 0 0 2px #424a46, 0 0 0 12px #111513, 0 0 0 14px #2b312e; }
 
     @keyframes status-pulse { 50% { opacity: .45; transform: scale(.78); } }
-    @media (max-width: 880px) {
-      body { padding: 30px 18px 48px; }
-      .review-layout { grid-template-columns: 1fr; justify-items: center; gap: 52px; }
-      .review-notes { width: min(466px,100%); }
-    }
-    @media (max-width: 520px) {
-      .device-stage { width: min(466px, calc(100vw - 36px)); height: min(466px, calc(100vw - 36px)); }
-      body:not(.embed) .device { transform: scale(calc((100vw - 36px) / 466)); transform-origin: top left; }
+    @media (max-width: 604px) {
+      body { padding: 12px; }
+      body:not(.embed) .review-layout {
+        width: min(556px, calc(100vw - 24px));
+        height: min(520px, calc((100vw - 24px) * .93525));
+      }
+      body:not(.embed) .device-stage {
+        width: 556px;
+        height: 520px;
+        transform: scale(calc((100vw - 24px) / 556px));
+        transform-origin: top left;
+      }
     }
   </style>
 </head>
@@ -666,42 +628,9 @@
         </section>
 
       </div>
+      <button class="hardware-key key-a" id="keyA" type="button" aria-label="Yellow hardware button A: hold for microphone"></button>
+      <button class="hardware-key key-b" id="keyB" type="button" aria-label="Blue hardware button B: send"></button>
     </section>
-
-    <aside class="review-notes">
-      <div class="kicker">Selected direction · single source</div>
-      <h1>Stopwatch Micro</h1>
-          <p>Command 与 Navigate 合并为同一页：四个触控命令环绕中央摇杆，回弹圆弧滑轨贴合屏幕外缘。物理 A 键负责语音，B 键负责发送，同时按下 A + B 在 Command 与 Agent 间切换。</p>
-      <div class="feature-list">
-        <span>Command 触控区：上 Fast / 左 Approve / 右 Decline / 下 Fork</span>
-        <span>按住物理 A = Mic 页面与动态音量；物理 B = Send；A + B = Command / Agent 切页</span>
-        <span>未配对 / 断连 = 独占 Pairing 页面；配对成功 = Command 主页</span>
-        <span>1 个触控传感器 = 长按 3 秒清除绑定并重新进入配对流程</span>
-        <span>Composer navigation = 从圆弧中点拖动滑块移动焦点，松手回中，点按打开或选择</span>
-        <span>Reasoning only = 从圆弧中点拖动滑块调节推理等级，松手回中，点按打开选项</span>
-        <span>1 个 planar joystick = Plan / Forward / Sidebar / Back</span>
-      </div>
-      <div class="dial-mode-preview">
-        <span>Review only · ChatGPT Settings</span>
-        <div class="dial-mode-options" role="group" aria-label="Dial mode preview">
-          <button class="dial-mode-option active" type="button" data-dial-mode="composer" aria-pressed="true">Composer navigation</button>
-          <button class="dial-mode-option" type="button" data-dial-mode="reasoning" aria-pressed="false">Reasoning only</button>
-        </div>
-      </div>
-      <div class="pairing-preview">
-        <span>Review only · Connection state</span>
-        <div class="pairing-preview-controls" role="group" aria-label="Bluetooth connection preview">
-          <button class="pairing-preview-button" id="pairSuccess" type="button">Pairing success</button>
-          <button class="pairing-preview-button disconnect" id="pairDisconnect" type="button" disabled>Disconnect</button>
-        </div>
-      </div>
-      <div class="external-controls" aria-label="Simulated StopWatch hardware controls">
-        <button class="hardware-key" id="keyA" type="button" disabled>A · MIC</button>
-        <button class="hardware-key" id="keyB" type="button" disabled>B · SEND</button>
-        <button class="hardware-key combo" id="keyCombo" type="button" disabled>A + B · PAGE</button>
-      </div>
-      <div class="shortcut-note">先用 Pairing success 模拟连接。按住 A（或键盘 A）查看 Mic 与动态音量，松开返回；B 发送，A + B 切换 Command / Agent。</div>
-    </aside>
   </main>
 
   <script>
@@ -717,18 +646,14 @@
       const micScreen = document.getElementById('micScreen');
       const micMeter = document.getElementById('micMeter');
       const micBars = [...micMeter.querySelectorAll('span')];
-      const pairSuccess = document.getElementById('pairSuccess');
-      const pairDisconnect = document.getElementById('pairDisconnect');
       const keyA = document.getElementById('keyA');
       const keyB = document.getElementById('keyB');
-      const keyCombo = document.getElementById('keyCombo');
       const joystick = document.getElementById('joystick');
       const joystickKnob = document.getElementById('joystickKnob');
       const arcSlider = document.getElementById('arcSlider');
       const arcThumb = document.getElementById('arcThumb');
-      const dialModeButtons = [...document.querySelectorAll('[data-dial-mode]')];
       const requestedStart = Number(params.get('start'));
-      const initialPaired = params.get('paired') === '1';
+      const initialPaired = params.get('paired') !== '0';
       const initialMic = params.get('mic') === '1';
       let page = Number.isInteger(requestedStart) && requestedStart >= 0 && requestedStart < pages.length ? requestedStart : 0;
       let paired = false;
@@ -789,7 +714,7 @@
           item.setAttribute('aria-hidden', String(!available));
         });
         touchControl.disabled = !paired || micActive;
-        [keyA, keyB, keyCombo].forEach((button) => { if (button) button.disabled = !paired; });
+        [keyA, keyB].forEach((button) => { if (button) button.disabled = !paired; });
       }
 
       function showPage(next, force = false) {
@@ -829,8 +754,6 @@
         pairingScreen.classList.toggle('show', !paired);
         pairingScreen.setAttribute('aria-hidden', String(paired));
         pairingScreen.inert = paired;
-        pairSuccess.disabled = paired;
-        pairDisconnect.disabled = !paired;
         if (paired) {
           showPage(0, true);
           setEvent('CONNECTED · COMMAND');
@@ -1022,24 +945,7 @@
         arcSlider.setAttribute('aria-label', composerMode
           ? 'Composer navigation arc slider: drag away from center and release to return, tap to select, hold 500 milliseconds for settings'
           : 'Reasoning only arc slider: drag away from center and release to return, tap for options, hold 500 milliseconds for settings');
-        dialModeButtons.forEach((button) => {
-          const active = button.dataset.dialMode === dialMode;
-          button.classList.toggle('active', active);
-          button.setAttribute('aria-pressed', String(active));
-        });
         updateArcThumb();
-      }
-
-      function selectDialMode(nextMode, persist = false) {
-        dialMode = nextMode === 'reasoning' ? 'reasoning' : 'composer';
-        renderDialMode();
-        setEvent(dialMode === 'composer' ? 'DIAL MODE · COMPOSER NAVIGATION' : 'DIAL MODE · REASONING ONLY');
-        if (persist) {
-          const url = new URL(location.href);
-          if (dialMode === 'composer') url.searchParams.delete('dial');
-          else url.searchParams.set('dial', 'reasoning');
-          history.replaceState(null, '', url);
-        }
       }
 
       function emitArcRotation(delta) {
@@ -1077,9 +983,6 @@
         }
       }
 
-      dialModeButtons.forEach((button) => {
-        button.addEventListener('click', () => selectDialMode(button.dataset.dialMode, true));
-      });
       renderDialMode();
 
       arcSlider.addEventListener('pointerdown', (event) => {
@@ -1186,11 +1089,14 @@
         button.addEventListener('pointercancel', () => releaseHardware(key));
         button.addEventListener('lostpointercapture', () => releaseHardware(key));
       });
-      keyCombo?.addEventListener('click', () => { if (paired) showPage(page === 0 ? 1 : 0); });
-
       window.addEventListener('keydown', (event) => {
-        if (event.repeat || !paired) return;
+        if (event.repeat) return;
         const key = event.key.toLowerCase();
+        if (key === 'p') {
+          setPaired(!paired);
+          return;
+        }
+        if (!paired) return;
         if (key === 'a') pressHardware('A');
         else if (key === 'd') pressHardware('B');
       });
@@ -1200,8 +1106,6 @@
         if (key === 'd') releaseHardware('B');
       });
 
-      pairSuccess.addEventListener('click', () => setPaired(true));
-      pairDisconnect.addEventListener('click', () => setPaired(false));
       setPaired(initialPaired);
       if (initialPaired && initialMic) pressHardware('A');
     })();
