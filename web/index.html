@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stopwatch Micro — UI Review</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f7f7f0;
+      --muted: #a3aca7;
+      --dim: #606964;
+      --line: rgba(247,247,239,.2);
+      --surface: rgba(255,255,250,.08);
+      --surface-hi: rgba(255,255,250,.16);
+      --key: #f1f0eb;
+      --key-hi: #fffefa;
+      --key-low: #e1e2dd;
+      --key-ink: #171a18;
+      --key-muted: #69716d;
+      --key-border: rgba(255,255,250,.72);
+      --key-shadow: 0 7px 16px rgba(0,0,0,.26);
+      --green: #59e3a5;
+      --blue: #6f9fff;
+      --amber: #f4b84b;
+      --red: #ff666a;
+      --codex-blue: #566bf7;
+      --codex-blue-hi: #9da1fc;
+      --codex-lavender: #c2b8ff;
+      --codex-indigo: #352ec8;
+      --codex-violet: #a76bb0;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 42px 28px;
+      overflow-x: hidden;
+      color: var(--ink);
+      background: #0a0d0b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button { font: inherit; }
+
+    .review-layout {
+      width: min(100%, 1020px);
+      display: grid;
+      grid-template-columns: 466px minmax(300px, 1fr);
+      align-items: center;
+      gap: 68px;
+    }
+    .device-stage { width: 466px; }
+    .device {
+      position: relative;
+      width: 466px;
+      height: 466px;
+      overflow: hidden;
+      border-radius: 50%;
+      isolation: isolate;
+      background: radial-gradient(circle at 50% 39%, #1a1e1b 0, #0d100f 66%, #070908 100%);
+      box-shadow: 0 0 0 2px #424a46, 0 0 0 12px #111513, 0 0 0 14px #2b312e, 0 26px 72px rgba(0,0,0,.58);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .device::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      z-index: -1;
+      border-radius: inherit;
+      background: linear-gradient(90deg, transparent 49.85%, rgba(255,255,255,.025) 50%, transparent 50.15%);
+      pointer-events: none;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateX(16px) scale(.99);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .22s ease;
+    }
+    .page.active { opacity: 1; transform: none; pointer-events: auto; }
+    .device.is-pairing .page,
+    .device.is-pairing .touch-control { pointer-events: none; }
+    .control-grid {
+      position: absolute;
+      top: 104px;
+      left: 48px;
+      width: 370px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 78px;
+      gap: 10px 12px;
+    }
+    .action {
+      position: relative;
+      min-width: 0;
+      min-height: 64px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      color: var(--ink);
+      background: linear-gradient(145deg, var(--surface-hi), var(--surface));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 7px 16px rgba(0,0,0,.28);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+    }
+    .action.is-pressed { transform: scale(.965); border-color: var(--green); }
+    .action-copy { min-width: 0; text-align: left; }
+    .action-name {
+      display: block;
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .action-id {
+      display: block;
+      margin-top: 5px;
+      color: var(--key-muted);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: .01em;
+    }
+    .light {
+      flex: 0 0 auto;
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(23,26,24,.13);
+      border-radius: 50%;
+      background: #3d4441;
+    }
+    .task {
+      min-height: 78px;
+      padding: 12px 17px;
+      border-color: var(--key-border);
+      border-radius: 28px;
+      color: var(--key-ink);
+      background: linear-gradient(145deg, var(--key-hi), var(--key-low) 88%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.86), var(--key-shadow);
+    }
+    .task::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.055);
+      pointer-events: none;
+    }
+    .task .action-copy,
+    .task .light { position: relative; z-index: 1; }
+    .task .action-name { font-size: 15px; }
+    .task .action-id { margin-top: 6px; }
+    .task.is-pressed { border-color: rgba(86,107,247,.58); }
+    .task[data-light="idle"] .light { background: #f7f7f1; box-shadow: 0 0 0 3px rgba(23,26,24,.08); }
+    .task[data-light="thinking"] .light { background: var(--blue); box-shadow: 0 0 0 3px rgba(111,159,255,.13); animation: status-pulse 1.8s ease-in-out infinite; }
+    .task[data-light="complete"] .light { background: var(--green); box-shadow: 0 0 0 3px rgba(89,227,165,.12); }
+    .task[data-light="input"] .light { background: var(--amber); box-shadow: 0 0 0 3px rgba(244,184,75,.13); }
+    .task[data-light="error"] .light { background: var(--red); box-shadow: 0 0 0 3px rgba(255,102,106,.12); }
+    .task[data-light="off"] .light { border-color: rgba(23,26,24,.1); background: #aeb4b0; box-shadow: none; }
+
+    .command-deck {
+      position: absolute;
+      inset: 0;
+    }
+    .command {
+      position: absolute;
+      left: 59px;
+      top: 59px;
+      z-index: 1;
+      width: 348px;
+      height: 348px;
+      min-height: 348px;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 50%;
+      color: #151817;
+      background: linear-gradient(145deg, var(--key-hi), var(--key-low) 88%);
+      filter: drop-shadow(0 5px 7px rgba(0,0,0,.28));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.84), inset 0 -3px 6px rgba(0,0,0,.045);
+      isolation: isolate;
+    }
+    .command::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: rgba(30,34,32,.018);
+      pointer-events: none;
+    }
+    .command-fast { clip-path: path("M 68.3 56.6 Q 61.6 49.2 68.3 43.4 A 168 168 0 0 1 279.7 43.4 Q 286.4 49.2 279.7 56.6 L 240.9 99.7 Q 234.2 107.1 228.2 102.1 A 90 90 0 0 0 119.8 102.1 Q 113.8 107.1 107.1 99.7 Z"); }
+    .command-decline { clip-path: path("M 291.4 68.3 Q 298.8 61.6 304.6 68.3 A 168 168 0 0 1 304.6 279.7 Q 298.8 286.4 291.4 279.7 L 248.3 240.9 Q 240.9 234.2 245.9 228.2 A 90 90 0 0 0 245.9 119.8 Q 240.9 113.8 248.3 107.1 Z"); }
+    .command-new-chat { clip-path: path("M 279.7 291.4 Q 286.4 298.8 279.7 304.6 A 168 168 0 0 1 68.3 304.6 Q 61.6 298.8 68.3 291.4 L 107.1 248.3 Q 113.8 240.9 119.8 245.9 A 90 90 0 0 0 228.2 245.9 Q 234.2 240.9 240.9 248.3 Z"); }
+    .command-approve { clip-path: path("M 56.6 279.7 Q 49.2 286.4 43.4 279.7 A 168 168 0 0 1 43.4 68.3 Q 49.2 61.6 56.6 68.3 L 99.7 107.1 Q 107.1 113.8 102.1 119.8 A 90 90 0 0 0 102.1 228.2 Q 107.1 234.2 99.7 240.9 Z"); }
+    .command-icon {
+      position: absolute;
+      z-index: 1;
+      width: 34px;
+      height: 34px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .command-fast .command-icon { left: 157px; top: 29px; }
+    .command-decline .command-icon { left: 285px; top: 157px; }
+    .command-new-chat .command-icon { left: 157px; top: 285px; }
+    .command-approve .command-icon { left: 29px; top: 157px; }
+    .command.is-pressed {
+      color: #101312;
+      background: linear-gradient(145deg, #fff, #eef4f0);
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,.3));
+      box-shadow: inset 0 2px 0 #fff, inset 0 -4px 8px rgba(0,0,0,.07);
+    }
+    .command.is-pressed::before { background: rgba(89,227,165,.12); }
+
+    .command-navigation {
+      position: absolute;
+      inset: 0;
+      width: 466px;
+      height: 466px;
+    }
+    .joystick-shell {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 3;
+      width: 206px;
+      height: 206px;
+      transform: translate(-50%, -50%);
+      border: 1px solid transparent;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: none;
+      touch-action: none;
+      cursor: grab;
+    }
+    .joystick-shell.dragging { cursor: grabbing; }
+    .joystick-knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(194,184,255,.8);
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, var(--codex-lavender) 0, var(--codex-blue-hi) 23%, #6c8dff 42%, var(--codex-blue) 60%, #4349db 78%, var(--codex-indigo) 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset -4px -3px 8px rgba(167,107,176,.2), 0 0 12px rgba(86,107,247,.22), 0 6px 13px rgba(0,0,0,.38);
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .arc-slider {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      width: 466px;
+      height: 466px;
+      overflow: visible;
+      touch-action: none;
+      pointer-events: none;
+      outline: none;
+    }
+    .arc-track-shadow,
+    .arc-track {
+      fill: none;
+      pointer-events: none;
+    }
+    .arc-track-shadow {
+      stroke: rgba(0,0,0,.42);
+      stroke-width: 8;
+    }
+    .arc-track {
+      stroke: rgba(190,195,192,.45);
+      stroke-width: 4;
+      stroke-linecap: round;
+      transition: stroke .12s ease, stroke-width .12s ease;
+    }
+    .arc-slider:focus-visible .arc-track { stroke: rgba(220,224,222,.86); stroke-width: 6; }
+    .arc-thumb { cursor: grab; will-change: transform; }
+    .arc-slider.dragging .arc-thumb { cursor: grabbing; }
+    .arc-thumb-hit { fill: transparent; pointer-events: all; }
+    .arc-thumb-block {
+      fill: #626763;
+      stroke: #a9aeab;
+      stroke-width: 1.5;
+      filter: drop-shadow(0 4px 5px rgba(0,0,0,.34));
+      transition: fill .1s ease, stroke .1s ease;
+    }
+    .arc-slider.dragging .arc-thumb-block { fill: #747a76; stroke: #d1d5d3; }
+    .arc-slider.returning .arc-thumb-block { fill: #656a67; stroke: #a6aca8; }
+    .arc-thumb-grip { stroke: rgba(238,241,239,.58); stroke-width: 1.5; stroke-linecap: round; pointer-events: none; }
+
+    .touch-control {
+      position: absolute;
+      left: 50%;
+      bottom: -17px;
+      z-index: 8;
+      width: 154px;
+      height: 68px;
+      padding: 11px 0 0;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(247,247,239,.26);
+      border-bottom: 0;
+      border-radius: 77px 77px 0 0 / 34px 34px 0 0;
+      color: #c9cecb;
+      background: rgba(255,255,250,.075);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 -5px 14px rgba(0,0,0,.18);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform .08s ease, border-color .12s ease, color .12s ease;
+    }
+    .touch-control::before {
+      content: "";
+      position: absolute;
+      inset: 7px 14px -12px;
+      border-radius: 63px 63px 0 0 / 26px 26px 0 0;
+      background: rgba(255,255,250,.025);
+      pointer-events: none;
+    }
+    .touch-icon {
+      position: relative;
+      z-index: 1;
+      width: 25px;
+      height: 25px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.55;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .touch-control.is-pressed { transform: translateX(-50%) scale(.96); border-color: rgba(89,227,165,.72); color: var(--green); }
+
+    .status-announcer {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .mic-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 39%, #1a1e1b 0, #0d100f 66%, #070908 100%);
+      transition: opacity .12s ease, visibility .12s ease;
+    }
+    .mic-screen.show { opacity: 1; visibility: visible; pointer-events: auto; }
+    .mic-content {
+      display: grid;
+      justify-items: center;
+      gap: 42px;
+      transform: translateY(-7px);
+    }
+    .mic-icon-wrap {
+      position: relative;
+      width: 128px;
+      height: 128px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,250,.82);
+      border-radius: 44px;
+      color: #151817;
+      background: linear-gradient(145deg, var(--key-hi), var(--key-low) 90%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.86), 0 8px 18px rgba(0,0,0,.28);
+    }
+    .mic-icon {
+      width: 60px;
+      height: 60px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .mic-meter {
+      width: 204px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .mic-meter span {
+      width: 8px;
+      height: 54px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fffefa, #c8ccc7);
+      box-shadow: 0 2px 5px rgba(0,0,0,.2);
+      opacity: .26;
+      transform: scaleY(.12);
+      transition: transform .13s ease-out, opacity .13s ease-out;
+      transform-origin: center;
+    }
+    .mic-screen.show .mic-meter span { opacity: .72; }
+
+    .pairing-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 45%, #202421 0, #111513 47%, #080a09 78%);
+      transition: opacity .18s ease, visibility .18s ease;
+    }
+    .pairing-screen.show { opacity: 1; visibility: visible; pointer-events: auto; }
+    .pairing-content { display: grid; justify-items: center; gap: 24px; transform: translateY(-4px); }
+    .pairing-pulse {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(247,247,239,.24);
+      border-radius: 50%;
+    }
+    .pairing-pulse::before,
+    .pairing-pulse::after {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border: 1px solid rgba(247,247,239,.18);
+      border-radius: inherit;
+      animation: pairing-wave 2.1s ease-out infinite;
+    }
+    .pairing-pulse::after { animation-delay: 1.05s; }
+    .pairing-core {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f5f5ef;
+      box-shadow: 0 0 20px rgba(247,247,239,.3);
+      animation: pairing-core 1.4s ease-in-out infinite;
+    }
+    .pairing-title {
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -.015em;
+    }
+    .pairing-dots { display: flex; gap: 8px; }
+    .pairing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #9aa29e;
+      animation: pairing-dot 1.2s ease-in-out infinite;
+    }
+    .pairing-dots span:nth-child(2) { animation-delay: .16s; }
+    .pairing-dots span:nth-child(3) { animation-delay: .32s; }
+
+    @keyframes pairing-wave {
+      0% { opacity: .7; transform: scale(.82); }
+      80%, 100% { opacity: 0; transform: scale(1.75); }
+    }
+    @keyframes pairing-core { 50% { opacity: .58; transform: scale(.78); } }
+    @keyframes pairing-dot { 0%, 70%, 100% { opacity: .28; } 35% { opacity: 1; } }
+
+    .review-notes .kicker { margin-bottom: 14px; color: var(--green); font-size: 11px; font-weight: 850; letter-spacing: .22em; text-transform: uppercase; }
+    .review-notes h1 { margin: 0; max-width: 440px; font-size: clamp(31px,5vw,49px); line-height: 1.02; letter-spacing: -.035em; }
+    .review-notes p { max-width: 440px; margin: 20px 0 0; color: #aab2ae; font-size: 15px; line-height: 1.72; }
+    .feature-list { display: grid; gap: 9px; margin-top: 22px; color: #87918c; font-size: 12px; }
+    .feature-list span { padding-left: 13px; border-left: 2px solid #2b3530; }
+    .dial-mode-preview { margin-top: 24px; }
+    .dial-mode-preview > span {
+      display: block;
+      margin-bottom: 9px;
+      color: #6e7772;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .dial-mode-options { display: flex; gap: 8px; }
+    .dial-mode-option {
+      min-height: 39px;
+      padding: 0 14px;
+      border: 1px solid #303934;
+      border-radius: 13px;
+      color: #89928d;
+      background: #121714;
+      font-size: 11px;
+      font-weight: 780;
+      cursor: pointer;
+      transition: color .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .dial-mode-option:hover { border-color: #53615a; color: var(--ink); }
+    .dial-mode-option.active {
+      border-color: rgba(89,227,165,.62);
+      color: var(--green);
+      background: rgba(89,227,165,.08);
+    }
+    .pairing-preview { margin-top: 18px; }
+    .pairing-preview > span {
+      display: block;
+      margin-bottom: 9px;
+      color: #6e7772;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .pairing-preview-controls { display: flex; gap: 8px; }
+    .pairing-preview-button {
+      min-height: 39px;
+      padding: 0 14px;
+      border: 1px solid #303934;
+      border-radius: 13px;
+      color: #dce2df;
+      background: #121714;
+      font-size: 11px;
+      font-weight: 780;
+      cursor: pointer;
+    }
+    .pairing-preview-button.disconnect { color: #d56a70; }
+    .pairing-preview-button:disabled { opacity: .32; cursor: not-allowed; }
+    .external-controls { display: flex; align-items: center; gap: 12px; margin-top: 27px; }
+    .hardware-key {
+      min-width: 96px;
+      min-height: 64px;
+      border: 1px solid #3a433f;
+      border-radius: 20px;
+      color: var(--ink);
+      background: #171c19;
+      font-size: 16px;
+      font-weight: 850;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform .08s ease, border-color .12s ease;
+    }
+    .hardware-key:active, .hardware-key.held { transform: translateY(2px); border-color: var(--green); }
+    .hardware-key:disabled { opacity: .28; cursor: not-allowed; }
+    .hardware-key.combo { min-width: 124px; color: var(--green); font-size: 11px; letter-spacing: .06em; }
+    .shortcut-note { margin-top: 12px; color: #6e7772; font-size: 11px; letter-spacing: .04em; }
+
+    body.embed { width: 466px; height: 466px; min-height: 466px; padding: 0; overflow: hidden; background: #080b09; }
+    body.embed .review-layout { display: block; width: 466px; height: 466px; }
+    body.embed .review-notes { display: none; }
+    body.embed .device { box-shadow: none; }
+
+    @keyframes status-pulse { 50% { opacity: .45; transform: scale(.78); } }
+    @media (max-width: 880px) {
+      body { padding: 30px 18px 48px; }
+      .review-layout { grid-template-columns: 1fr; justify-items: center; gap: 52px; }
+      .review-notes { width: min(466px,100%); }
+    }
+    @media (max-width: 520px) {
+      .device-stage { width: min(466px, calc(100vw - 36px)); height: min(466px, calc(100vw - 36px)); }
+      body:not(.embed) .device { transform: scale(calc((100vw - 36px) / 466)); transform-origin: top left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="review-layout">
+    <section class="device-stage" aria-label="466 by 466 circular display preview">
+      <div class="device" id="device">
+        <section class="page active" data-page="0" aria-label="Command controls">
+          <div class="command-deck">
+            <button class="action command command-fast" type="button" data-action="ACT06" aria-label="Fast mode — ACT06">
+              <svg class="command-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M16 2 6.5 15h6L11 26l10.5-15h-6L16 2Z"/></svg>
+            </button>
+            <button class="action command command-approve" type="button" data-action="ACT07" aria-label="Approve — ACT07">
+              <svg class="command-icon" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="10.5"/><path d="m9.2 14.2 3.2 3.2 6.5-7"/></svg>
+            </button>
+            <button class="action command command-decline" type="button" data-action="ACT08" aria-label="Decline — ACT08">
+              <svg class="command-icon" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="10.5"/><path d="m10.3 10.3 7.4 7.4m0-7.4-7.4 7.4"/></svg>
+            </button>
+            <button class="action command command-new-chat" type="button" data-action="ACT09" aria-label="Fork — ACT09">
+              <svg class="command-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="M4 14h4.4c5.2 0 4.1-7.5 9.6-7.5h5M19.5 3 23 6.5 19.5 10M8.4 14c5.2 0 4.1 7.5 9.6 7.5h5M19.5 18 23 21.5 19.5 25"/></svg>
+            </button>
+          </div>
+          <div class="command-navigation">
+            <div class="joystick-shell" id="joystick" role="slider" tabindex="0" aria-label="Planar joystick" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-valuetext="Centered">
+              <span class="joystick-knob" id="joystickKnob"></span>
+            </div>
+            <svg class="arc-slider" id="arcSlider" viewBox="0 0 466 466" role="slider" tabindex="0" aria-label="Composer navigation arc slider: drag away from center and release to return, tap to select, hold 500 milliseconds for settings" aria-valuemin="-18" aria-valuemax="18" aria-valuenow="0" aria-valuetext="Centered">
+              <path class="arc-track-shadow" d="M 95.6 387.6 A 208 208 0 1 1 370.4 387.6" />
+              <path class="arc-track" d="M 95.6 387.6 A 208 208 0 1 1 370.4 387.6" />
+              <g class="arc-thumb" id="arcThumb">
+                <circle class="arc-thumb-hit" r="27" />
+                <rect class="arc-thumb-block" x="-23" y="-15" width="46" height="30" rx="9" />
+                <path class="arc-thumb-grip" d="M -8 -7 V 7 M 0 -7 V 7 M 8 -7 V 7" />
+              </g>
+            </svg>
+          </div>
+        </section>
+
+        <section class="page" data-page="1" aria-label="Agent Keys">
+          <div class="control-grid">
+            <button class="action task" type="button" data-action="AG00" data-light="thinking"><span class="action-copy"><span class="action-name">Agent 1</span><span class="action-id">Thinking</span></span><span class="light"></span></button>
+            <button class="action task" type="button" data-action="AG01" data-light="input"><span class="action-copy"><span class="action-name">Agent 2</span><span class="action-id">Needs input</span></span><span class="light"></span></button>
+            <button class="action task" type="button" data-action="AG02" data-light="complete"><span class="action-copy"><span class="action-name">Agent 3</span><span class="action-id">Complete</span></span><span class="light"></span></button>
+            <button class="action task" type="button" data-action="AG03" data-light="idle"><span class="action-copy"><span class="action-name">Agent 4</span><span class="action-id">Idle</span></span><span class="light"></span></button>
+            <button class="action task" type="button" data-action="AG04" data-light="error"><span class="action-copy"><span class="action-name">Agent 5</span><span class="action-id">Error</span></span><span class="light"></span></button>
+            <button class="action task" type="button" data-action="AG05" data-light="off"><span class="action-copy"><span class="action-name">Agent 6</span><span class="action-id">Unassigned</span></span><span class="light"></span></button>
+          </div>
+        </section>
+
+        <section class="mic-screen" id="micScreen" aria-label="Microphone input" aria-hidden="true" inert>
+          <div class="mic-content">
+            <div class="mic-icon-wrap" aria-hidden="true">
+              <svg class="mic-icon" viewBox="0 0 64 64">
+                <rect x="23" y="9" width="18" height="32" rx="9" />
+                <path d="M16 31v2c0 9 7.2 16 16 16s16-7 16-16v-2M32 49v8M24 57h16" />
+              </svg>
+            </div>
+            <div class="mic-meter" id="micMeter" role="meter" aria-label="Voice volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </section>
+
+        <button class="touch-control" id="touchControl" type="button" aria-label="Touch sensor · hold three seconds to restart pairing">
+          <svg class="touch-icon" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M5.5 16.5C5.5 10 10.1 5 16 5s10.5 5 10.5 11.5"/>
+            <path d="M8.5 17c0-5 3.3-9 7.5-9s7.5 4 7.5 9c0 4.6-.8 8.1-2.4 10.7"/>
+            <path d="M11.5 17.2c0-3.3 1.9-5.8 4.5-5.8s4.5 2.5 4.5 5.8c0 5.1-1.4 8.9-3.5 11.5"/>
+            <path d="M16 16.8c0 4.6-.8 7.9-2.8 10.4M8.3 21.1c-.3 2.2-1 4-2 5.3"/>
+          </svg>
+        </button>
+
+        <div class="status-announcer" id="eventLine" aria-live="polite">PAIRING</div>
+
+        <section class="pairing-screen show" id="pairingScreen" aria-label="Bluetooth pairing" aria-hidden="false">
+          <div class="pairing-content">
+            <div class="pairing-pulse" aria-hidden="true"><span class="pairing-core"></span></div>
+            <strong class="pairing-title">Pairing</strong>
+            <div class="pairing-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+    <aside class="review-notes">
+      <div class="kicker">Selected direction · single source</div>
+      <h1>Stopwatch Micro</h1>
+          <p>Command 与 Navigate 合并为同一页：四个触控命令环绕中央摇杆，回弹圆弧滑轨贴合屏幕外缘。物理 A 键负责语音，B 键负责发送，同时按下 A + B 在 Command 与 Agent 间切换。</p>
+      <div class="feature-list">
+        <span>Command 触控区：上 Fast / 左 Approve / 右 Decline / 下 Fork</span>
+        <span>按住物理 A = Mic 页面与动态音量；物理 B = Send；A + B = Command / Agent 切页</span>
+        <span>未配对 / 断连 = 独占 Pairing 页面；配对成功 = Command 主页</span>
+        <span>1 个触控传感器 = 长按 3 秒清除绑定并重新进入配对流程</span>
+        <span>Composer navigation = 从圆弧中点拖动滑块移动焦点，松手回中，点按打开或选择</span>
+        <span>Reasoning only = 从圆弧中点拖动滑块调节推理等级，松手回中，点按打开选项</span>
+        <span>1 个 planar joystick = Plan / Forward / Sidebar / Back</span>
+      </div>
+      <div class="dial-mode-preview">
+        <span>Review only · ChatGPT Settings</span>
+        <div class="dial-mode-options" role="group" aria-label="Dial mode preview">
+          <button class="dial-mode-option active" type="button" data-dial-mode="composer" aria-pressed="true">Composer navigation</button>
+          <button class="dial-mode-option" type="button" data-dial-mode="reasoning" aria-pressed="false">Reasoning only</button>
+        </div>
+      </div>
+      <div class="pairing-preview">
+        <span>Review only · Connection state</span>
+        <div class="pairing-preview-controls" role="group" aria-label="Bluetooth connection preview">
+          <button class="pairing-preview-button" id="pairSuccess" type="button">Pairing success</button>
+          <button class="pairing-preview-button disconnect" id="pairDisconnect" type="button" disabled>Disconnect</button>
+        </div>
+      </div>
+      <div class="external-controls" aria-label="Simulated StopWatch hardware controls">
+        <button class="hardware-key" id="keyA" type="button" disabled>A · MIC</button>
+        <button class="hardware-key" id="keyB" type="button" disabled>B · SEND</button>
+        <button class="hardware-key combo" id="keyCombo" type="button" disabled>A + B · PAGE</button>
+      </div>
+      <div class="shortcut-note">先用 Pairing success 模拟连接。按住 A（或键盘 A）查看 Mic 与动态音量，松开返回；B 发送，A + B 切换 Command / Agent。</div>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      if (params.get('embed') === '1') document.body.classList.add('embed');
+
+      const pages = [...document.querySelectorAll('.page')].sort((a, b) => Number(a.dataset.page) - Number(b.dataset.page));
+      const device = document.getElementById('device');
+      const eventLine = document.getElementById('eventLine');
+      const touchControl = document.getElementById('touchControl');
+      const pairingScreen = document.getElementById('pairingScreen');
+      const micScreen = document.getElementById('micScreen');
+      const micMeter = document.getElementById('micMeter');
+      const micBars = [...micMeter.querySelectorAll('span')];
+      const pairSuccess = document.getElementById('pairSuccess');
+      const pairDisconnect = document.getElementById('pairDisconnect');
+      const keyA = document.getElementById('keyA');
+      const keyB = document.getElementById('keyB');
+      const keyCombo = document.getElementById('keyCombo');
+      const joystick = document.getElementById('joystick');
+      const joystickKnob = document.getElementById('joystickKnob');
+      const arcSlider = document.getElementById('arcSlider');
+      const arcThumb = document.getElementById('arcThumb');
+      const dialModeButtons = [...document.querySelectorAll('[data-dial-mode]')];
+      const requestedStart = Number(params.get('start'));
+      const initialPaired = params.get('paired') === '1';
+      const initialMic = params.get('mic') === '1';
+      let page = Number.isInteger(requestedStart) && requestedStart >= 0 && requestedStart < pages.length ? requestedStart : 0;
+      let paired = false;
+      const held = new Set();
+      let comboLatched = false;
+      let micActive = false;
+      let micLevelTimer = 0;
+      let micPhase = 0;
+      let micSmoothedLevel = .18;
+
+      const setEvent = (text) => { eventLine.textContent = text; };
+
+      function updateMicLevel() {
+        micPhase += .55;
+        const base = .24 + (Math.sin(micPhase) + 1) * .17;
+        const rawLevel = Math.min(1, base + Math.random() * .34);
+        micSmoothedLevel += (rawLevel - micSmoothedLevel) * .38;
+        const level = micSmoothedLevel;
+        const center = (micBars.length - 1) / 2;
+        micBars.forEach((bar, index) => {
+          const falloff = Math.abs(index - center) / center;
+          const ripple = .76 + Math.sin(micPhase * 1.35 + index * .8) * .24;
+          const height = Math.max(.12, Math.min(1, level * ripple * (1 - falloff * .28)));
+          bar.style.transform = `scaleY(${height.toFixed(3)})`;
+          bar.style.opacity = String((.35 + height * .65).toFixed(3));
+        });
+        micMeter.setAttribute('aria-valuenow', String(Math.round(level * 100)));
+      }
+
+      function setMicActive(nextActive) {
+        const active = Boolean(nextActive && paired && !comboLatched);
+        if (active === micActive) return;
+        micActive = active;
+        clearInterval(micLevelTimer);
+        micLevelTimer = 0;
+        micScreen.classList.toggle('show', micActive);
+        micScreen.setAttribute('aria-hidden', String(!micActive));
+        micScreen.inert = !micActive;
+        device.classList.toggle('is-mic', micActive);
+        if (micActive) {
+          micSmoothedLevel = .18;
+          updateMicLevel();
+          micLevelTimer = window.setInterval(updateMicLevel, 120);
+        } else {
+          micMeter.setAttribute('aria-valuenow', '0');
+          micBars.forEach((bar) => {
+            bar.style.transform = 'scaleY(.12)';
+            bar.style.opacity = '.26';
+          });
+        }
+        syncFunctionalAvailability();
+      }
+
+      function syncFunctionalAvailability() {
+        pages.forEach((item, index) => {
+          const available = paired && !micActive && index === page;
+          item.inert = !available;
+          item.setAttribute('aria-hidden', String(!available));
+        });
+        touchControl.disabled = !paired || micActive;
+        [keyA, keyB, keyCombo].forEach((button) => { if (button) button.disabled = !paired; });
+      }
+
+      function showPage(next, force = false) {
+        if (!paired && !force) return;
+        if (micActive) setMicActive(false);
+        page = (next + pages.length) % pages.length;
+        pages.forEach((item, index) => item.classList.toggle('active', index === page));
+        syncFunctionalAvailability();
+        setEvent(page === 0 ? 'COMMAND · 4 TOUCH + STICK + ARC' : 'AGENTS · 6 / 6');
+      }
+
+      function setPaired(nextPaired) {
+        paired = Boolean(nextPaired);
+        setMicActive(false);
+        held.clear();
+        comboLatched = false;
+        keyA?.classList.remove('held');
+        keyB?.classList.remove('held');
+        touchControl.classList.remove('is-pressed');
+        if (!paired) {
+          clearTimeout(touchHoldTimer);
+          clearTimeout(arcHoldTimer);
+          cancelArcReturn();
+          touchLong = false;
+          arcPointer = null;
+          arcSlider.classList.remove('dragging');
+          arcStep = ARC_CENTER_STEP;
+          updateArcThumb();
+          stickPointer = null;
+          stickDistance = 0;
+          joystick.classList.remove('dragging');
+          joystickKnob.style.transform = 'translate(-50%, -50%)';
+          joystick.setAttribute('aria-valuenow', '0.00');
+          joystick.setAttribute('aria-valuetext', 'Centered');
+        }
+        device.classList.toggle('is-pairing', !paired);
+        pairingScreen.classList.toggle('show', !paired);
+        pairingScreen.setAttribute('aria-hidden', String(paired));
+        pairingScreen.inert = paired;
+        pairSuccess.disabled = paired;
+        pairDisconnect.disabled = !paired;
+        if (paired) {
+          showPage(0, true);
+          setEvent('CONNECTED · COMMAND');
+        } else {
+          syncFunctionalAvailability();
+          setEvent('PAIRING');
+        }
+      }
+
+      document.querySelectorAll('.action').forEach((button) => {
+        const release = () => button.classList.remove('is-pressed');
+        button.addEventListener('pointerdown', (event) => {
+          if (!paired) return;
+          button.setPointerCapture?.(event.pointerId);
+          button.classList.add('is-pressed');
+        });
+        button.addEventListener('pointerup', release);
+        button.addEventListener('pointercancel', release);
+        button.addEventListener('lostpointercapture', release);
+      });
+
+      document.querySelectorAll('.task').forEach((task) => {
+        let previousTap = 0;
+        task.addEventListener('click', () => {
+          const now = performance.now();
+          const focusApp = now - previousTap < 350;
+          setEvent(`${focusApp ? 'FOCUS CHAT' : 'SWITCH CHAT'} · ${task.dataset.action}`);
+          previousTap = now;
+        });
+      });
+
+      const commandLabels = {
+        ACT06: 'FAST MODE · TOGGLE',
+        ACT07: 'APPROVE CURRENT REQUEST',
+        ACT08: 'DECLINE CURRENT REQUEST',
+        ACT09: 'FORK · CONTINUE IN NEW CHAT'
+      };
+      Object.entries(commandLabels).forEach(([action, label]) => {
+        document.querySelector(`[data-action="${action}"]`)?.addEventListener('click', () => setEvent(label));
+      });
+
+      function releaseMicControl() {
+        setMicActive(false);
+        setEvent('VOICE · READY');
+      }
+
+      let stickPointer = null;
+      let lastAngle = 0;
+      let stickDistance = 0;
+
+      function directionFor(angle) {
+        if (angle >= .875 || angle < .125) return 'FORWARD';
+        if (angle < .375) return 'SIDEBAR';
+        if (angle < .625) return 'BACK';
+        return 'PLAN';
+      }
+
+      function updateJoystick(clientX, clientY) {
+        const rect = joystick.getBoundingClientRect();
+        const dx = clientX - (rect.left + rect.width / 2);
+        const dy = clientY - (rect.top + rect.height / 2);
+        const maxTravel = 73;
+        const rawDistance = Math.hypot(dx, dy);
+        stickDistance = Math.min(1, rawDistance / maxTravel);
+        const angle = rawDistance < .5 ? lastAngle : ((Math.atan2(dy, dx) / (Math.PI * 2)) + 1) % 1;
+        if (rawDistance >= .5) lastAngle = angle;
+        const scale = rawDistance > maxTravel ? maxTravel / rawDistance : 1;
+        const x = dx * scale;
+        const y = dy * scale;
+        joystickKnob.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
+        const direction = directionFor(angle);
+        joystick.setAttribute('aria-valuenow', stickDistance.toFixed(2));
+        joystick.setAttribute('aria-valuetext', `${direction} ${stickDistance.toFixed(2)}`);
+        setEvent(stickDistance >= .35 ? `${direction} · ${stickDistance.toFixed(2)}` : `STICK · ${stickDistance.toFixed(2)}`);
+      }
+
+      joystick.addEventListener('pointerdown', (event) => {
+        if (!paired || stickPointer !== null) return;
+        stickPointer = event.pointerId;
+        joystick.classList.add('dragging');
+        joystick.setPointerCapture?.(event.pointerId);
+        updateJoystick(event.clientX, event.clientY);
+      });
+      joystick.addEventListener('pointermove', (event) => {
+        if (event.pointerId === stickPointer) updateJoystick(event.clientX, event.clientY);
+      });
+      const releaseJoystick = (event) => {
+        if (stickPointer === null || (event.pointerId !== undefined && event.pointerId !== stickPointer)) return;
+        const direction = directionFor(lastAngle);
+        const triggered = stickDistance >= .35;
+        stickPointer = null;
+        stickDistance = 0;
+        joystick.classList.remove('dragging');
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystick.setAttribute('aria-valuenow', '0.00');
+        joystick.setAttribute('aria-valuetext', 'Centered');
+        setEvent(triggered ? `${direction} · RELEASED` : 'STICK · CENTER');
+      };
+      joystick.addEventListener('pointerup', releaseJoystick);
+      joystick.addEventListener('pointercancel', releaseJoystick);
+      joystick.addEventListener('lostpointercapture', releaseJoystick);
+
+      const ARC_CENTER = 233;
+      const ARC_RADIUS = 208;
+      const ARC_START_DEGREES = 132;
+      const ARC_END_DEGREES = 408;
+      const ARC_STEP_COUNT = 36;
+      const ARC_CENTER_STEP = ARC_STEP_COUNT / 2;
+      const ARC_RETURN_MS = 240;
+      let dialMode = params.get('dial') === 'reasoning' ? 'reasoning' : 'composer';
+      let arcStep = ARC_CENTER_STEP;
+      let arcVisualStep = arcStep;
+      let arcAngle = ARC_START_DEGREES + (ARC_END_DEGREES - ARC_START_DEGREES) * (arcStep / ARC_STEP_COUNT);
+      let arcPointer = null;
+      let arcMoved = false;
+      let arcLong = false;
+      let arcHoldTimer = 0;
+      let arcReturnTimer = 0;
+      let arcReturnFrame = 0;
+
+      function positionArcThumb(step = arcVisualStep) {
+        arcVisualStep = step;
+        arcAngle = ARC_START_DEGREES + (ARC_END_DEGREES - ARC_START_DEGREES) * (arcVisualStep / ARC_STEP_COUNT);
+        const radians = arcAngle * Math.PI / 180;
+        const x = ARC_CENTER + ARC_RADIUS * Math.cos(radians);
+        const y = ARC_CENTER + ARC_RADIUS * Math.sin(radians);
+        arcThumb.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(arcAngle + 90).toFixed(2)})`);
+      }
+
+      function syncArcAccessibility() {
+        const relativeStep = arcStep - ARC_CENTER_STEP;
+        const modeLabel = dialMode === 'composer' ? 'Composer navigation' : 'Reasoning only';
+        arcSlider.setAttribute('aria-valuenow', String(relativeStep));
+        arcSlider.setAttribute('aria-valuetext', relativeStep === 0
+          ? 'Centered'
+          : `${modeLabel} ${Math.abs(relativeStep)} steps ${relativeStep > 0 ? 'clockwise' : 'counterclockwise'}`);
+      }
+
+      function updateArcThumb() {
+        positionArcThumb(arcStep);
+        syncArcAccessibility();
+      }
+
+      function cancelArcReturn(adoptVisualPosition = false) {
+        clearTimeout(arcReturnTimer);
+        arcReturnTimer = 0;
+        if (arcReturnFrame) cancelAnimationFrame(arcReturnFrame);
+        arcReturnFrame = 0;
+        arcSlider.classList.remove('returning');
+        if (adoptVisualPosition) {
+          arcStep = Math.round(arcVisualStep);
+          updateArcThumb();
+        }
+      }
+
+      function returnArcToCenter() {
+        cancelArcReturn();
+        const fromStep = arcVisualStep;
+        const distance = ARC_CENTER_STEP - fromStep;
+        arcStep = ARC_CENTER_STEP;
+        syncArcAccessibility();
+        if (Math.abs(distance) < .01) {
+          positionArcThumb(ARC_CENTER_STEP);
+          return;
+        }
+        const startedAt = performance.now();
+        arcSlider.classList.add('returning');
+        const animateReturn = (now) => {
+          const progress = Math.min(1, (now - startedAt) / ARC_RETURN_MS);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          positionArcThumb(fromStep + distance * eased);
+          if (progress < 1) arcReturnFrame = requestAnimationFrame(animateReturn);
+          else {
+            arcReturnFrame = 0;
+            arcSlider.classList.remove('returning');
+            positionArcThumb(ARC_CENTER_STEP);
+          }
+        };
+        arcReturnFrame = requestAnimationFrame(animateReturn);
+      }
+
+      function scheduleArcReturn(delay = 90) {
+        clearTimeout(arcReturnTimer);
+        arcReturnTimer = window.setTimeout(returnArcToCenter, delay);
+      }
+
+      function renderDialMode() {
+        const composerMode = dialMode === 'composer';
+        arcSlider.setAttribute('aria-label', composerMode
+          ? 'Composer navigation arc slider: drag away from center and release to return, tap to select, hold 500 milliseconds for settings'
+          : 'Reasoning only arc slider: drag away from center and release to return, tap for options, hold 500 milliseconds for settings');
+        dialModeButtons.forEach((button) => {
+          const active = button.dataset.dialMode === dialMode;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        updateArcThumb();
+      }
+
+      function selectDialMode(nextMode, persist = false) {
+        dialMode = nextMode === 'reasoning' ? 'reasoning' : 'composer';
+        renderDialMode();
+        setEvent(dialMode === 'composer' ? 'DIAL MODE · COMPOSER NAVIGATION' : 'DIAL MODE · REASONING ONLY');
+        if (persist) {
+          const url = new URL(location.href);
+          if (dialMode === 'composer') url.searchParams.delete('dial');
+          else url.searchParams.set('dial', 'reasoning');
+          history.replaceState(null, '', url);
+        }
+      }
+
+      function emitArcRotation(delta) {
+        if (!paired || !delta) return;
+        const clockwise = delta > 0;
+        if (dialMode === 'composer') setEvent(clockwise ? 'ENC_CW' : 'ENC_CCW');
+        else setEvent(clockwise ? 'ENC_CW · REASONING +' : 'ENC_CCW · REASONING −');
+      }
+
+      function setArcStep(nextStep, emit = true) {
+        cancelArcReturn(true);
+        const clamped = Math.max(0, Math.min(ARC_STEP_COUNT, nextStep));
+        if (clamped === arcStep) return;
+        const delta = clamped - arcStep;
+        arcStep = clamped;
+        updateArcThumb();
+        if (emit) emitArcRotation(delta);
+      }
+
+      function updateArcFromPointer(clientX, clientY) {
+        const rect = arcSlider.getBoundingClientRect();
+        const x = (clientX - rect.left) * (466 / rect.width);
+        const y = (clientY - rect.top) * (466 / rect.height);
+        const rawAngle = (Math.atan2(y - ARC_CENTER, x - ARC_CENTER) * 180 / Math.PI + 360) % 360;
+        const candidates = [rawAngle - 360, rawAngle, rawAngle + 360];
+        const unwrapped = candidates.reduce((best, candidate) =>
+          Math.abs(candidate - arcAngle) < Math.abs(best - arcAngle) ? candidate : best
+        );
+        const clampedAngle = Math.max(ARC_START_DEGREES, Math.min(ARC_END_DEGREES, unwrapped));
+        const nextStep = Math.round((clampedAngle - ARC_START_DEGREES) / (ARC_END_DEGREES - ARC_START_DEGREES) * ARC_STEP_COUNT);
+        if (nextStep !== arcStep) {
+          setArcStep(nextStep);
+          arcMoved = true;
+          clearTimeout(arcHoldTimer);
+        }
+      }
+
+      dialModeButtons.forEach((button) => {
+        button.addEventListener('click', () => selectDialMode(button.dataset.dialMode, true));
+      });
+      renderDialMode();
+
+      arcSlider.addEventListener('pointerdown', (event) => {
+        if (!paired || !arcThumb.contains(event.target)) return;
+        cancelArcReturn(true);
+        arcPointer = event.pointerId;
+        arcMoved = false;
+        arcLong = false;
+        arcSlider.classList.add('dragging');
+        clearTimeout(arcHoldTimer);
+        arcHoldTimer = window.setTimeout(() => {
+          arcLong = true;
+          setEvent('OPEN CODEX MICRO SETTINGS');
+        }, 500);
+      });
+      document.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== arcPointer || arcLong) return;
+        updateArcFromPointer(event.clientX, event.clientY);
+      });
+      const releaseArc = (event) => {
+        if (arcPointer === null || (event.pointerId !== undefined && event.pointerId !== arcPointer)) return;
+        clearTimeout(arcHoldTimer);
+        arcPointer = null;
+        arcSlider.classList.remove('dragging');
+        if (arcLong) setEvent('SETTINGS · REQUESTED');
+        else if (!arcMoved) setEvent(dialMode === 'composer' ? 'DIAL · OPEN OR SELECT' : 'DIAL · OPEN REASONING OPTIONS');
+        returnArcToCenter();
+      };
+      document.addEventListener('pointerup', releaseArc);
+      document.addEventListener('pointercancel', releaseArc);
+      arcSlider.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        setArcStep(arcStep + (event.deltaY > 0 ? -1 : 1));
+        scheduleArcReturn();
+      }, { passive: false });
+      arcSlider.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') { event.preventDefault(); setArcStep(arcStep - 1); scheduleArcReturn(); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); setArcStep(arcStep + 1); scheduleArcReturn(); }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setEvent(dialMode === 'composer' ? 'DIAL · OPEN OR SELECT' : 'DIAL · OPEN REASONING OPTIONS');
+        }
+      });
+
+      let touchLong = false;
+      let touchHoldTimer = 0;
+
+      touchControl.addEventListener('pointerdown', (event) => {
+        if (!paired) return;
+        touchLong = false;
+        touchControl.classList.add('is-pressed');
+        touchControl.setPointerCapture?.(event.pointerId);
+        clearTimeout(touchHoldTimer);
+        touchHoldTimer = window.setTimeout(() => {
+          touchLong = true;
+          setPaired(false);
+        }, 3000);
+      });
+      touchControl.addEventListener('pointerup', () => {
+        clearTimeout(touchHoldTimer);
+        touchControl.classList.remove('is-pressed');
+        if (!paired || touchLong) return;
+        setEvent('TOUCH · READY');
+      });
+      touchControl.addEventListener('pointercancel', () => {
+        clearTimeout(touchHoldTimer);
+        touchControl.classList.remove('is-pressed');
+      });
+
+      function pressHardware(which, pointerId) {
+        if (!paired) return;
+        const button = which === 'A' ? keyA : keyB;
+        if (pointerId !== undefined) button.setPointerCapture?.(pointerId);
+        held.add(which);
+        button.classList.add('held');
+        const other = which === 'A' ? 'B' : 'A';
+        if (held.has(other)) {
+          comboLatched = true;
+          setMicActive(false);
+          showPage(page === 0 ? 1 : 0);
+        } else if (which === 'A') {
+          setMicActive(true);
+          setEvent('VOICE · HOLD TO TALK');
+        } else {
+          setEvent('SEND · READY');
+        }
+      }
+
+      function releaseHardware(which) {
+        const triggerSingleAction = paired && held.has(which) && !comboLatched;
+        held.delete(which);
+        (which === 'A' ? keyA : keyB)?.classList.remove('held');
+        if (triggerSingleAction) {
+          if (which === 'A') releaseMicControl();
+          else setEvent('SEND MESSAGE');
+        }
+        if (held.size === 0) comboLatched = false;
+      }
+
+      [[keyA, 'A'], [keyB, 'B']].forEach(([button, key]) => {
+        if (!button) return;
+        button.addEventListener('pointerdown', (event) => pressHardware(key, event.pointerId));
+        button.addEventListener('pointerup', () => releaseHardware(key));
+        button.addEventListener('pointercancel', () => releaseHardware(key));
+        button.addEventListener('lostpointercapture', () => releaseHardware(key));
+      });
+      keyCombo?.addEventListener('click', () => { if (paired) showPage(page === 0 ? 1 : 0); });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.repeat || !paired) return;
+        const key = event.key.toLowerCase();
+        if (key === 'a') pressHardware('A');
+        else if (key === 'd') pressHardware('B');
+      });
+      window.addEventListener('keyup', (event) => {
+        const key = event.key.toLowerCase();
+        if (key === 'a') releaseHardware('A');
+        if (key === 'd') releaseHardware('B');
+      });
+
+      pairSuccess.addEventListener('click', () => setPaired(true));
+      pairDisconnect.addEventListener('click', () => setPaired(false));
+      setPaired(initialPaired);
+      if (initialPaired && initialMic) pressHardware('A');
+    })();
+  </script>
+</body>
+</html>

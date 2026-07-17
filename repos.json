@@ -20,11 +20,6 @@
         "branch": "0.2.19"
     },
     {
-        "url": "https://github.com/bblanchon/ArduinoJson.git",
-        "path": "components/ArduinoJson",
-        "branch": "v7.4.3"
-    },
-    {
         "url": "https://github.com/lvgl/lvgl.git",
         "path": "components/lvgl",
         "branch": "v9.5.0"
@@ -40,11 +35,5 @@
         "path": "components/M5PM1",
         "branch": "1.0.6",
         "patch": "patches/M5PM1.patch"
-    },
-    {
-        "url": "https://github.com/lbuque/BMI270_BMM150_Sensor.git",
-        "path": "components/BMI270_BMM150_Sensor",
-        "branch": "0.1.2",
-        "with_submodules": true
     }
 ]

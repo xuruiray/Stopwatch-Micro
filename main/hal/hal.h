@@ -5,101 +5,19 @@
  */
 #pragma once
 #include "utils/button/Button_Class.hpp"
-#include <apps/common/common.h>
+#include <system_config.h>
 #include <memory>
 #include <cstdint>
 #include <string>
 #include <lvgl.h>
-#include <functional>
 #include <smooth_ui_toolkit.hpp>
 #include <uitk/short_namespace.hpp>
 #include <smooth_lvgl.hpp>
 #include <i2c_bus.h>
 #include <string_view>
 #include <array>
-#include <M5GFX.h>
-
-/**
- * @brief
- *
- */
-struct AlarmStorageEntry {
-    uint8_t hour     = 0;
-    uint8_t minute   = 0;
-    uint8_t enabled  = 0;
-    uint8_t reserved = 0;
-
-    bool isValid() const
-    {
-        return hour < 24 && minute < 60 && enabled <= 1;
-    }
-};
-
-/**
- * @brief
- *
- */
-struct AlarmStorageSnapshot {
-    static constexpr std::size_t maxAlarmCount = 16;
-
-    uint8_t version                                     = 1;
-    uint8_t count                                       = 0;
-    uint16_t reserved                                   = 0;
-    std::array<AlarmStorageEntry, maxAlarmCount> alarms = {};
-};
-
-/**
- * @brief
- *
- */
-struct TimeHms {
-    uint8_t hour   = 0;
-    uint8_t minute = 0;
-    uint8_t second = 0;
-
-    bool isValid() const
-    {
-        return hour < 24 && minute < 60 && second < 60;
-    }
-};
-
-/**
- * @brief
- *
- */
-struct DateYmd {
-    uint16_t year = 2026;
-    uint8_t month = 1;
-    uint8_t day   = 1;
-
-    static bool isLeapYear(uint16_t year)
-    {
-        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-    }
-
-    static uint8_t daysInMonth(uint16_t year, uint8_t month)
-    {
-        static constexpr uint8_t month_days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        if (month < 1 || month > 12) {
-            return 0;
-        }
-        if (month == 2 && isLeapYear(year)) {
-            return 29;
-        }
-        return month_days[month - 1];
-    }
-
-    bool isValid() const
-    {
-        const uint8_t max_day = daysInMonth(year, month);
-        return year >= 2000 && year <= 2099 && max_day != 0 && day >= 1 && day <= max_day;
-    }
-};
-
-/**
- * @brief
- *
- */
+#include <vector>
+/** Startup screen shown while the system UI is being created. */
 class BootLogo {
 public:
     BootLogo()
@@ -116,7 +34,7 @@ public:
         _label_logo->setTextFont(&lv_font_montserrat_28);
         _label_logo->setTextColor(lv_color_hex(0xFFFFFF));
         _label_logo->align(LV_ALIGN_CENTER, 0, -14);
-        _label_logo->setText("StopWatch");
+        _label_logo->setText(system_config::ProductName);
 
         _label_msg = std::make_unique<uitk::lvgl_cpp::Label>(_panel->get());
         _label_msg->setTextFont(&lv_font_montserrat_16);
@@ -128,7 +46,7 @@ public:
         _label_version->setTextFont(&lv_font_montserrat_14);
         _label_version->setTextColor(lv_color_hex(0x8B8B8B));
         _label_version->align(LV_ALIGN_BOTTOM_MID, 0, -12);
-        _label_version->setText(common::FirmwareVersion);
+        _label_version->setText(system_config::FirmwareVersion);
     }
 
 private:
@@ -138,10 +56,7 @@ private:
     std::unique_ptr<uitk::lvgl_cpp::Label> _label_version;
 };
 
-/**
- * @brief
- *
- */
+/** Board services required by the Stopwatch Micro system firmware. */
 class Hal {
 public:
     void init();
@@ -163,11 +78,6 @@ public:
     void setBackLightBrightness(int brightness, bool saveToSettings = false);
     int getBackLightBrightness(bool loadFromSettings = false);
 
-    // M5GFX
-    LGFX_Device& getDisplay();
-    LGFX_Sprite& getCanvas();
-    void updateCanvas();
-
     // Lvgl
     lv_indev_t* lvTouchpad = nullptr;
     std::unique_ptr<BootLogo> bootLogo;
@@ -188,54 +98,11 @@ public:
     void setSpeakerVolume(int volume, bool saveToSettings = false);
     int getSpeakerVolume(bool loadFromSettings = false);
     int getAudioSampleRate();
-    void audioRecord(std::vector<int16_t>& data, uint16_t durationMs, float gain = 30.0f);
     void audioPlay(std::vector<int16_t>& data, bool async = true);
-
-    struct AudioSpectrumFrame {
-        static constexpr std::size_t bandCount = 20;
-        std::array<float, bandCount> bands     = {};
-        float peakFrequencyHz                  = 0.0f;
-    };
-    void updateAudioSpectrum();
-    const AudioSpectrumFrame& getAudioSpectrum() const
-    {
-        return _audio_spectrum;
-    }
-
-    void playBootSfx();
 
     /* ----------------------------- Vibrator Motor ----------------------------- */
     void vibrate(uint16_t durationMs, uint8_t strength = 100);
     void stopVibrate();
-
-    /* ----------------------------------- IMU ---------------------------------- */
-    struct ImuData {
-        float accelX = 0.0f;
-        float accelY = 0.0f;
-        float accelZ = 0.0f;
-        float gyroX  = 0.0f;
-        float gyroY  = 0.0f;
-        float gyroZ  = 0.0f;
-    };
-    void updateImuData();
-    const ImuData& getImuData() const
-    {
-        return _imu_data;
-    }
-
-    /* ---------------------------------- Time ---------------------------------- */
-    void syncRtcTimeToSystem();
-    void syncSystemTimeToRtc();
-    DateYmd getDateYmd();
-    bool setDateYmd(const DateYmd& date);
-    TimeHms getTimeHms();
-    bool setTimeHms(const TimeHms& time);
-    void setTimezone(std::string_view tz);
-    std::string getTimezone();
-    bool loadAlarmStorage(AlarmStorageSnapshot& snapshot);
-    bool saveAlarmStorage(const AlarmStorageSnapshot& snapshot);
-    void startAlarm();
-    void stopAlarm();
 
     /* --------------------------------- Button --------------------------------- */
     m5::Button_Class btnA;
@@ -251,22 +118,11 @@ public:
     void setButtonConfig(ButtonConfig config, bool saveToSettings = false);
     const ButtonConfig& getButtonConfig(bool loadFromSettings = false);
 
-    /* ---------------------------------- Badge --------------------------------- */
-    bool loadBadgeImage(lv_obj_t* image);
-    bool loadNextBadgeImage(lv_obj_t* image);
-    bool loadPreviousBadgeImage(lv_obj_t* image);
-    void startBadgeEditModeViaAp(std::function<void(std::string_view)> onLog);
-
-    /* ---------------------------------- Guide --------------------------------- */
-    bool shouldShowGuide();
-
 private:
     static constexpr std::string_view SettingsNs = "system";
 
     i2c_bus_handle_t _i2c_bus = nullptr;
-    ImuData _imu_data;
     ButtonConfig _btn_config;
-    AudioSpectrumFrame _audio_spectrum;
     int _bl_brightness = 80;
     int _spk_volume    = 80;
 
@@ -281,26 +137,28 @@ private:
     void touchpad_init();
     void lvgl_init();
     void audio_init();
-    void imu_init();
-    void rtc_init();
     void button_init();
-    void fs_init();
 };
 
 Hal& GetHAL();
 
-/**
- * @brief
- *
- */
+/** Scoped serialization for LVGL access from the Mooncake task. */
 class LvglLockGuard {
 public:
     LvglLockGuard()
+        : _locked(GetHAL().lvglLock())
     {
-        GetHAL().lvglLock();
     }
     ~LvglLockGuard()
     {
-        GetHAL().lvglUnlock();
+        if (_locked) {
+            GetHAL().lvglUnlock();
+        }
     }
+
+    LvglLockGuard(const LvglLockGuard&) = delete;
+    LvglLockGuard& operator=(const LvglLockGuard&) = delete;
+
+private:
+    bool _locked;
 };

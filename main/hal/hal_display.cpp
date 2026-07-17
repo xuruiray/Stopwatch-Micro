@@ -10,6 +10,7 @@
 #include <lgfx/v1/panel/Panel_AMOLED.hpp>
 #include <smooth_ui_toolkit.hpp>
 #include <uitk/short_namespace.hpp>
+#include <esp_log.h>
 #include <memory>
 
 static const std::string_view _tag = "HAL-Display";
@@ -159,7 +160,6 @@ public:
 };
 
 static std::unique_ptr<M5StopWatch> _display;
-static std::unique_ptr<LGFX_Sprite> _canvas;
 
 void Hal::display_init()
 {
@@ -169,34 +169,12 @@ void Hal::display_init()
     if (!_display->init()) {
         mclog::tagError(_tag, "display init failed");
         _display.reset();
+        ESP_ERROR_CHECK(ESP_FAIL);
     }
-
-    // mclog::tagInfo(_tag, "create full screen canvas");
-    // _canvas = std::make_unique<LGFX_Sprite>(_display.get());
-    // _canvas->setPsram(true);
-    // if (!_canvas->createSprite(_display->width(), _display->height())) {
-    //     mclog::tagError(_tag, "canvas init failed");
-    //     _canvas.reset();
-    // }
 
     // Load brightness from settings
     auto brightness = getBackLightBrightness(true);
     setBackLightBrightness(brightness, false);
-}
-
-LGFX_Device &Hal::getDisplay()
-{
-    return *_display;
-}
-
-LGFX_Sprite &Hal::getCanvas()
-{
-    return *_canvas;
-}
-
-void Hal::updateCanvas()
-{
-    _canvas->pushSprite(0, 0);
 }
 
 void Hal::setBackLightBrightness(int brightness, bool saveToSettings)
@@ -270,6 +248,9 @@ static SemaphoreHandle_t xGuiSemaphore;
 static std::atomic<bool> _lvgl_update_enabled = false;
 
 #define LV_BUFFER_LINE 120
+#define LV_TOUCH_READ_PERIOD_MS 16
+constexpr uint32_t LVGL_TASK_STACK_SIZE = 32 * 1024;
+constexpr uint32_t LVGL_STACK_SAMPLE_COUNT = 20;
 
 static void lvgl_tick_timer(void *arg)
 {
@@ -280,10 +261,15 @@ static void lvgl_tick_timer(void *arg)
 static void lvgl_rtos_task(void *pvParameter)
 {
     (void)pvParameter;
-    while (1) {
+    uint32_t handled_count = 0;
+    while (true) {
         if (_lvgl_update_enabled && pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
             lv_timer_handler();
             xSemaphoreGive(xGuiSemaphore);
+            if (++handled_count == LVGL_STACK_SAMPLE_COUNT) {
+                ESP_LOGI("HAL-Display", "LVGL task minimum free stack: %u bytes",
+                         static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr)));
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -326,10 +312,8 @@ static void lvgl_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     lv_display_flush_ready(disp);
 }
 
-static void lvgl_read_cb(lv_indev_t *indev, lv_indev_data_t *data)
+static void lvgl_read_cb(lv_indev_t *, lv_indev_data_t *data)
 {
-    M5GFX &gfx = *(M5GFX *)lv_indev_get_driver_data(indev);
-
     auto tp = GetHAL().getTouchPoint();
     if (tp.num == 0) {
         data->state = LV_INDEV_STATE_REL;
@@ -347,36 +331,58 @@ void Hal::lvgl_init()
     lv_init();
 
     static lv_display_t *disp = lv_display_create(_display->width(), _display->height());
-    if (disp == NULL) {
-        printf("lv_display_create failed\n");
-        return;
+    if (disp == nullptr) {
+        ESP_LOGE("HAL-Display", "failed to create LVGL display");
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
 
     lv_display_set_driver_data(disp, _display.get());
     lv_display_set_flush_cb(disp, lvgl_flush_cb);
 
-    static uint8_t *buf1 = (uint8_t *)heap_caps_malloc(_display->width() * LV_BUFFER_LINE, MALLOC_CAP_SPIRAM);
-    static uint8_t *buf2 = (uint8_t *)heap_caps_malloc(_display->width() * LV_BUFFER_LINE, MALLOC_CAP_SPIRAM);
-    lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, _display->width() * LV_BUFFER_LINE,
+    const std::size_t draw_buffer_size = static_cast<std::size_t>(_display->width()) * LV_BUFFER_LINE *
+                                         LV_COLOR_FORMAT_GET_SIZE(lv_display_get_color_format(disp));
+    static uint8_t *buf1 = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
+    static uint8_t *buf2 = (uint8_t *)heap_caps_malloc(draw_buffer_size, MALLOC_CAP_SPIRAM);
+    if (buf1 == nullptr || buf2 == nullptr) {
+        ESP_LOGE("HAL-Display", "failed to allocate %u-byte LVGL draw buffers",
+                 static_cast<unsigned>(draw_buffer_size));
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
+    lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, draw_buffer_size,
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
 
     lvTouchpad = lv_indev_create();
     LV_ASSERT_MALLOC(lvTouchpad);
-    if (lvTouchpad == NULL) {
-        printf("lv_indev_create failed\n");
-        return;
+    if (lvTouchpad == nullptr) {
+        ESP_LOGE("HAL-Display", "failed to create LVGL touch input");
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     }
-    lv_indev_set_driver_data(lvTouchpad, _display.get());
     lv_indev_set_type(lvTouchpad, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(lvTouchpad, lvgl_read_cb);
     lv_indev_set_display(lvTouchpad, disp);
+    lv_timer_set_period(lv_indev_get_read_timer(lvTouchpad), LV_TOUCH_READ_PERIOD_MS);
 
     xGuiSemaphore                                     = xSemaphoreCreateMutex();
-    const esp_timer_create_args_t periodic_timer_args = {.callback = &lvgl_tick_timer, .name = "lvgl_tick_timer"};
+    if (xGuiSemaphore == nullptr) {
+        ESP_LOGE("HAL-Display", "failed to create LVGL mutex");
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback              = &lvgl_tick_timer,
+        .arg                   = nullptr,
+        .dispatch_method       = ESP_TIMER_TASK,
+        .name                  = "lvgl_tick_timer",
+        .skip_unhandled_events = false,
+    };
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 10 * 1000));
-    xTaskCreate(lvgl_rtos_task, "lvgl_rtos_task", 4096 * 4, NULL, 1, NULL);
+    if (xTaskCreate(lvgl_rtos_task, "lvgl_rtos_task", LVGL_TASK_STACK_SIZE, nullptr, 1, nullptr) !=
+        pdPASS) {
+        ESP_LOGE("HAL-Display", "failed to create LVGL task with %u-byte stack",
+                 static_cast<unsigned>(LVGL_TASK_STACK_SIZE));
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
 
     startLvglUpdate();
 
@@ -390,12 +396,14 @@ void Hal::lvgl_init()
 
 bool Hal::lvglLock()
 {
-    return xSemaphoreTake(xGuiSemaphore, portMAX_DELAY) == pdTRUE ? true : false;
+    return xGuiSemaphore != nullptr && xSemaphoreTake(xGuiSemaphore, portMAX_DELAY) == pdTRUE;
 }
 
 void Hal::lvglUnlock()
 {
-    xSemaphoreGive(xGuiSemaphore);
+    if (xGuiSemaphore != nullptr) {
+        xSemaphoreGive(xGuiSemaphore);
+    }
 }
 
 void Hal::startLvglUpdate()

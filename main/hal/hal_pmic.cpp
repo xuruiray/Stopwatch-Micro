@@ -98,7 +98,6 @@ void Hal::pmic_init()
     }
 
     _pm1->setI2cSleepTime(0);
-    _pm1->setI2cSleepTime(0);
 
     // set button delay click 1s
     _pm1->btnSetConfig(M5PM1_BTN_TYPE_CLICK, M5PM1_BTN_CLICK_DELAY_1000MS);
@@ -124,7 +123,9 @@ void Hal::pmic_init()
         update_bat_level_from_mv(battery_mv);
     }
 
-    xTaskCreate(bat_reading_task, "bat_reading", 4 * 1024, NULL, 1, NULL);
+    if (xTaskCreate(bat_reading_task, "bat_reading", 4 * 1024, nullptr, 1, nullptr) != pdPASS) {
+        mclog::tagError(_tag, "failed to create battery reading task");
+    }
 }
 
 bool Hal::pmic_get_pwr_btn_state()

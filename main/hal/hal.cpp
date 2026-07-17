@@ -5,6 +5,7 @@
  */
 #include "hal.h"
 #include <memory>
+#include <esp_log.h>
 #include <mooncake_log.h>
 #include <nvs_flash.h>
 
@@ -40,10 +41,7 @@ void Hal::init()
     touchpad_init();
     lvgl_init();
     audio_init();
-    imu_init();
-    rtc_init();
     button_init();
-    fs_init();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -120,7 +118,16 @@ void Hal::i2c_init()
             },
         .clk_flags = 0,
     };
+    // i2c_bus probes for an existing IDF master bus first. IDF logs that
+    // expected "not initialized" probe as an error, so silence only the probe
+    // and restore the project-wide info level immediately afterwards.
+    esp_log_level_set("i2c.master", ESP_LOG_NONE);
     _i2c_bus = i2c_bus_create(I2C_NUM_0, &conf);
+    esp_log_level_set("i2c.master", ESP_LOG_INFO);
+    if (_i2c_bus == nullptr) {
+        mclog::tagError(_tag, "failed to initialize i2c bus");
+        ESP_ERROR_CHECK(ESP_FAIL);
+    }
 
     i2c_detect();
 }
@@ -152,30 +159,4 @@ void Hal::i2c_detect()
         }
         printf("\r\n");
     }
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                    Guide                                   */
-/* -------------------------------------------------------------------------- */
-#include "utils/settings/settings.h"
-
-namespace {
-
-constexpr const char* _guide_launch_count_key = "launch_count";
-constexpr int _guide_show_limit               = 5;
-
-}  // namespace
-
-bool Hal::shouldShowGuide()
-{
-    Settings settings(std::string(Hal::SettingsNs), true);
-    const int launch_count = settings.GetInt(_guide_launch_count_key, 0);
-    if (launch_count >= _guide_show_limit) {
-        mclog::tagInfo(_tag, "skip guide, launch count: {}", launch_count);
-        return false;
-    }
-
-    settings.SetInt(_guide_launch_count_key, launch_count + 1);
-    mclog::tagInfo(_tag, "show guide, launch count: {} -> {}", launch_count, launch_count + 1);
-    return true;
 }

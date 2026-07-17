@@ -49,6 +49,8 @@ managed_components/
 
 # Python virtual environment
 .venv/
+__pycache__/
+*.py[cod]
 
 # Debug / Release files
 Debug/

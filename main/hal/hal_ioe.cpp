@@ -19,7 +19,7 @@ namespace {
 
 constexpr uint8_t _ioe_addr_primary   = 0x4F;
 constexpr uint8_t _ioe_addr_secondary = 0x6F;
-int _l3b_en_retry_count               = 0;
+constexpr int L3bEnableMaxAttempts    = 10;
 
 }  // namespace
 
@@ -34,7 +34,7 @@ int _l3b_en_retry_count               = 0;
 #define PY32_MOTOR_PWM_CHANNEL 0
 #define SPK_PA_PIN             (gpio_num_t)14
 
-void _vibrator_init();
+void vibrator_init();
 
 void Hal::ioe_init()
 {
@@ -59,7 +59,6 @@ void Hal::ioe_init()
     mclog::tagInfo(_tag, "init success, addr: 0x{:02X}", selected_addr);
 
     _ioe->setI2cSleepTime(0);
-    _ioe->setI2cSleepTime(0);
 
     _ioe->pinMode(PY32_MOTOR_EN_PIN, OUTPUT);
     _ioe->pinMode(PY32_L3B_EN_PIN, OUTPUT);
@@ -81,23 +80,30 @@ void Hal::ioe_init()
     gpio_set_direction(SPK_PA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(SPK_PA_PIN, 0);
 
-    _vibrator_init();
+    vibrator_init();
 
-    // Make sure PY32_L3B_EN_PIN is set to HIGH
-    while (1) {
+    bool l3b_enabled = false;
+    for (int attempt = 1; attempt <= L3bEnableMaxAttempts; ++attempt) {
         delay(80);
         if (_ioe->digitalRead(PY32_L3B_EN_PIN) == 1) {
+            l3b_enabled = true;
             break;
         }
         _ioe->digitalWrite(PY32_L3B_EN_PIN, 1);
-        _l3b_en_retry_count++;
-        mclog::tagInfo(_tag, "set L3B_EN HIGH, retry count: {}", _l3b_en_retry_count);
+        mclog::tagWarn(_tag, "set L3B_EN HIGH, attempt {}/{}", attempt, L3bEnableMaxAttempts);
+    }
+    if (!l3b_enabled) {
+        mclog::tagError(_tag, "L3B_EN did not become ready after {} attempts", L3bEnableMaxAttempts);
     }
 }
 
 void Hal::ioe_tp_reset()
 {
     mclog::tagInfo(_tag, "touchpad reset");
+    if (!_ioe) {
+        mclog::tagError(_tag, "touchpad reset skipped: IO expander unavailable");
+        return;
+    }
 
     _ioe->digitalWrite(PY32_TP_RST_PIN, 0);
     delay(10);
@@ -108,6 +114,10 @@ void Hal::ioe_tp_reset()
 void Hal::ioe_speaker_enable(bool enable)
 {
     mclog::tagInfo(_tag, "set speaker {}", enable ? "enable" : "disable");
+    if (!_ioe) {
+        mclog::tagError(_tag, "speaker control skipped: IO expander unavailable");
+        return;
+    }
 
     if (enable) {
         _ioe->digitalWrite(PY32_SPK_PA_PIN, 1);
@@ -127,10 +137,14 @@ void Hal::ioe_speaker_enable(bool enable)
 
 static class Vibrator {
 public:
-    void init()
+    bool init()
     {
-        xTaskCreate([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024, this, 5,
-                    &_task_handle);
+        if (xTaskCreate([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024,
+                        this, 5, &_task_handle) != pdPASS) {
+            mclog::tagError(_tag, "failed to create vibrator task");
+            return false;
+        }
+        return true;
     }
 
     void vibrate(uint16_t durationMs, uint8_t strength)
@@ -179,7 +193,7 @@ private:
         _ioe->setPwmDuty(PY32_MOTOR_PWM_CHANNEL, 0, false, true);
         uint8_t current_strength = 0;
 
-        while (1) {
+        while (true) {
             TickType_t now          = xTaskGetTickCount();
             TickType_t wait_ticks   = portMAX_DELAY;
             bool should_vibrate     = false;
@@ -223,7 +237,7 @@ private:
     uint8_t _strength         = 0;
 } _vibrator;
 
-void _vibrator_init()
+void vibrator_init()
 {
     _vibrator.init();
 }
