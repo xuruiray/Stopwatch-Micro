@@ -13,6 +13,24 @@ _Concept product image generated from the project UI and the physical form shown
 > This project implements an unofficial compatibility layer for a protocol that is not a stable
 > public API. A future ChatGPT update may require corresponding firmware changes.
 
+## References and project status
+
+Stopwatch Micro was built with reference to the following sources:
+
+- [Official Codex Micro documentation](https://learn.chatgpt.com/docs/features/codex-micro) is the
+  authoritative reference for pairing, controls, ChatGPT Desktop behavior, and the intended user
+  experience.
+- [`imliubo/codex-micro-4-core2`](https://github.com/imliubo/codex-micro-4-core2) is an unofficial,
+  reverse-engineered compatibility implementation used as the engineering reference for the BLE
+  HID identity, Codex Micro control IDs, and vendor JSON-RPC transport. The reviewed upstream
+  revision is [`2ee23a4`](https://github.com/imliubo/codex-micro-4-core2/commit/2ee23a4ab696f94bb78d250f28cc4a9b879ba079).
+
+This repository is an independent community project. It is not affiliated with, endorsed by, or
+supported by OpenAI, ChatGPT, Codex, Work Louder, or the `codex-micro-4-core2` maintainers. The
+official documentation describes supported product behavior, but it does not make the underlying
+vendor protocol a stable public API. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the
+upstream copyright and MIT license notice.
+
 ## Interface and controls
 
 The functional UI is locked behind the connection state. When no compatible host is connected,
@@ -42,7 +60,7 @@ vendor HID transport does not stream StopWatch PCM audio to the host.
 The reviewable HTML version of the interface lives in [`web/index.html`](web/index.html). It models
 connection, page, touch, joystick, slider, and physical-key interactions without requiring the
 device. The included GitHub Pages workflow can publish it at the URL below after Pages is enabled
-for this private repository:
+for this public repository:
 
 ![Stopwatch Micro Command UI preview](docs/assets/stopwatch-micro-ui.png)
 
@@ -51,9 +69,8 @@ for this private repository:
 Command is the default preview. Use `?paired=0` to show Pairing and `?mic=1` to preview the Mic
 state. The yellow and blue on-screen hardware buttons also support simultaneous A+B page switching.
 
-GitHub Free does not currently enable Pages for private repositories. The workflow is therefore
-manual-only: keep the repository private, upgrade to a plan with private-repository Pages support,
-enable Pages with GitHub Actions as the source, and run **Deploy web prototype**.
+The workflow is manual-only: enable Pages with GitHub Actions as the source in the repository
+settings, then run **Deploy web prototype** from the Actions tab.
 
 ## Source layout
 
