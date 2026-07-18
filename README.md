@@ -16,6 +16,12 @@ _Concept product image generated from the project UI and the physical form shown
 > This project implements an unofficial compatibility layer for a protocol that is not a stable
 > public API. A future ChatGPT update may require corresponding firmware changes.
 
+## Video demo
+
+[![Watch the Stopwatch Micro demo on YouTube](https://img.youtube.com/vi/PCNvLT41fwM/maxresdefault.jpg)](https://www.youtube.com/shorts/PCNvLT41fwM)
+
+_Click the preview to watch Stopwatch Micro controlling Codex in the YouTube Short._
+
 ## References and project status
 
 Stopwatch Micro was built with reference to the following sources:
