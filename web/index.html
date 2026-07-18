@@ -37,7 +37,7 @@
       margin: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 40px 24px;
       overflow-x: hidden;
       color: var(--ink);
       background: #0a0d0b;
@@ -46,7 +46,14 @@
     button { font: inherit; }
 
     .review-layout {
-      display: block;
+      display: grid;
+      grid-template-columns: 556px minmax(320px, 420px);
+      align-items: center;
+      gap: 64px;
+      width: min(1040px, 100%);
+      min-width: 0;
+    }
+    .device-preview {
       width: 556px;
       height: 520px;
     }
@@ -517,45 +524,148 @@
     @keyframes pairing-dot { 0%, 70%, 100% { opacity: .28; } 35% { opacity: 1; } }
     .hardware-key {
       position: absolute;
-      top: 103px;
-      z-index: 3;
-      width: 38px;
-      height: 82px;
+      top: 52px;
+      z-index: 1;
+      width: 36px;
+      height: 76px;
       padding: 0;
       border: 2px solid rgba(255,255,255,.25);
-      border-radius: 13px;
+      border-radius: 12px;
       cursor: pointer;
       touch-action: manipulation;
       box-shadow: inset 0 2px 2px rgba(255,255,255,.28), inset 0 -4px 6px rgba(0,0,0,.18), 0 8px 17px rgba(0,0,0,.38);
       transition: transform .08s ease, filter .12s ease, opacity .12s ease;
     }
     .hardware-key.key-a {
-      left: 26px;
+      left: 87px;
       background: linear-gradient(145deg, #ffd55b, #efaa24 76%);
-      transform: rotate(-17deg);
+      transform: rotate(-42deg);
     }
     .hardware-key.key-b {
-      right: 26px;
+      right: 87px;
       background: linear-gradient(145deg, #75b9ff, #3d82e8 76%);
-      transform: rotate(17deg);
+      transform: rotate(42deg);
     }
     .hardware-key.key-a:active,
-    .hardware-key.key-a.held { transform: rotate(-17deg) scale(.9); filter: brightness(1.13); }
+    .hardware-key.key-a.held { transform: rotate(-42deg) scale(.9); filter: brightness(1.13); }
     .hardware-key.key-b:active,
-    .hardware-key.key-b.held { transform: rotate(17deg) scale(.9); filter: brightness(1.13); }
+    .hardware-key.key-b.held { transform: rotate(42deg) scale(.9); filter: brightness(1.13); }
     .hardware-key:disabled { opacity: .55; cursor: not-allowed; }
+
+    .review-copy {
+      min-width: 0;
+      max-width: 420px;
+    }
+    .review-kicker {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .review-title {
+      margin: 0;
+      font-size: clamp(42px, 5vw, 64px);
+      font-weight: 650;
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+    .review-description {
+      max-width: 390px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    .review-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 30px;
+    }
+    .review-control {
+      --control-accent: var(--green);
+      position: relative;
+      min-width: 0;
+      min-height: 82px;
+      overflow: hidden;
+      border: 1px solid rgba(247,247,239,.18);
+      border-radius: 20px;
+      padding: 16px 12px 13px;
+      color: var(--ink);
+      background: rgba(255,255,250,.055);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
+    }
+    .review-control::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 18px;
+      right: 18px;
+      height: 2px;
+      border-radius: 0 0 2px 2px;
+      background: var(--control-accent);
+      opacity: .9;
+    }
+    .review-control:hover { border-color: rgba(247,247,239,.34); background: rgba(255,255,250,.085); }
+    .review-control:active,
+    .review-control.held { transform: scale(.965); border-color: var(--control-accent); }
+    .review-control:disabled { opacity: .42; cursor: not-allowed; }
+    .review-control-a { --control-accent: #f5bd3f; }
+    .review-control-b { --control-accent: #5a9cf4; }
+    .review-control-combo { --control-accent: var(--green); }
+    .review-control-key {
+      display: block;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -.02em;
+    }
+    .review-control-label {
+      display: block;
+      margin-top: 10px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 550;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
 
     body.embed { width: 556px; height: 520px; min-height: 520px; padding: 0; overflow: hidden; background: #080b09; }
     body.embed .review-layout,
+    body.embed .device-preview,
     body.embed .device-stage { width: 556px; height: 520px; }
+    body.embed .review-layout { display: block; }
+    body.embed .review-copy { display: none; }
     body.embed .device { box-shadow: 0 0 0 2px #424a46, 0 0 0 12px #111513, 0 0 0 14px #2b312e; }
 
     @keyframes status-pulse { 50% { opacity: .45; transform: scale(.78); } }
+    @media (max-width: 1040px) {
+      body:not(.embed) .review-layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        width: 556px;
+      }
+      body:not(.embed) .review-copy {
+        max-width: 556px;
+        padding: 0 34px;
+      }
+      body:not(.embed) .review-description { max-width: 480px; }
+    }
     @media (max-width: 604px) {
       body { padding: 12px; }
       body:not(.embed) .review-layout {
         width: min(556px, calc(100vw - 24px));
-        height: min(520px, calc((100vw - 24px) * .93525));
+        gap: 24px;
+      }
+      body:not(.embed) .device-preview {
+        width: min(556px, calc(100vw - 24px));
+        height: min(520px, calc(93.525vw - 22.446px));
       }
       body:not(.embed) .device-stage {
         width: 556px;
@@ -563,13 +673,19 @@
         transform: scale(calc((100vw - 24px) / 556px));
         transform-origin: top left;
       }
+      body:not(.embed) .review-copy { padding: 0 8px 16px; }
+      .review-title { font-size: clamp(40px, 13vw, 58px); }
+      .review-description { margin-top: 18px; font-size: 15px; }
+      .review-controls { margin-top: 24px; }
+      .review-control { min-height: 76px; padding-inline: 8px; }
     }
   </style>
 </head>
 <body>
   <main class="review-layout">
-    <section class="device-stage" aria-label="466 by 466 circular display preview">
-      <div class="device" id="device">
+    <div class="device-preview">
+      <section class="device-stage" aria-label="466 by 466 circular display preview">
+        <div class="device" id="device">
         <div class="ambient-ring" aria-hidden="true"></div>
         <section class="page active" data-page="0" aria-label="Command controls">
           <div class="command-deck">
@@ -647,10 +763,31 @@
           </div>
         </section>
 
+        </div>
+        <button class="hardware-key key-a" id="keyA" type="button" aria-label="Yellow hardware button A: hold for microphone"></button>
+        <button class="hardware-key key-b" id="keyB" type="button" aria-label="Blue hardware button B: send"></button>
+      </section>
+    </div>
+
+    <aside class="review-copy" aria-labelledby="reviewTitle">
+      <p class="review-kicker">Codex control surface</p>
+      <h1 class="review-title" id="reviewTitle">Stopwatch Micro</h1>
+      <p class="review-description">圆屏交互预览。A 按住说话，B 发送消息，同时按下 A+B 可在 Command 与 Agent 页面之间切换。</p>
+      <div class="review-controls" aria-label="Physical key controls">
+        <button class="review-control review-control-a" id="reviewKeyA" type="button">
+          <span class="review-control-key">A</span>
+          <span class="review-control-label">按住说话</span>
+        </button>
+        <button class="review-control review-control-b" id="reviewKeyB" type="button">
+          <span class="review-control-key">B</span>
+          <span class="review-control-label">发送消息</span>
+        </button>
+        <button class="review-control review-control-combo" id="reviewCombo" type="button">
+          <span class="review-control-key">A+B</span>
+          <span class="review-control-label">切换页面</span>
+        </button>
       </div>
-      <button class="hardware-key key-a" id="keyA" type="button" aria-label="Yellow hardware button A: hold for microphone"></button>
-      <button class="hardware-key key-b" id="keyB" type="button" aria-label="Blue hardware button B: send"></button>
-    </section>
+    </aside>
   </main>
 
   <script>
@@ -668,6 +805,9 @@
       const micBars = [...micMeter.querySelectorAll('span')];
       const keyA = document.getElementById('keyA');
       const keyB = document.getElementById('keyB');
+      const reviewKeyA = document.getElementById('reviewKeyA');
+      const reviewKeyB = document.getElementById('reviewKeyB');
+      const reviewCombo = document.getElementById('reviewCombo');
       const joystick = document.getElementById('joystick');
       const joystickKnob = document.getElementById('joystickKnob');
       const arcSlider = document.getElementById('arcSlider');
@@ -735,6 +875,7 @@
         });
         touchControl.disabled = !paired || micActive;
         [keyA, keyB].forEach((button) => { if (button) button.disabled = !paired; });
+        [reviewKeyA, reviewKeyB, reviewCombo].forEach((button) => { if (button) button.disabled = !paired; });
       }
 
       function showPage(next, force = false) {
@@ -753,6 +894,9 @@
         comboLatched = false;
         keyA?.classList.remove('held');
         keyB?.classList.remove('held');
+        reviewKeyA?.classList.remove('held');
+        reviewKeyB?.classList.remove('held');
+        reviewCombo?.classList.remove('held');
         touchControl.classList.remove('is-pressed');
         if (!paired) {
           clearTimeout(touchHoldTimer);
@@ -1086,9 +1230,11 @@
         if (pointerId !== undefined) button.setPointerCapture?.(pointerId);
         held.add(which);
         button.classList.add('held');
+        (which === 'A' ? reviewKeyA : reviewKeyB)?.classList.add('held');
         const other = which === 'A' ? 'B' : 'A';
         if (held.has(other)) {
           comboLatched = true;
+          reviewCombo?.classList.add('held');
           setMicActive(false);
           showPage(page === 0 ? 1 : 0);
         } else if (which === 'A') {
@@ -1103,6 +1249,8 @@
         const triggerSingleAction = paired && held.has(which) && !comboLatched;
         held.delete(which);
         (which === 'A' ? keyA : keyB)?.classList.remove('held');
+        (which === 'A' ? reviewKeyA : reviewKeyB)?.classList.remove('held');
+        if (held.size < 2) reviewCombo?.classList.remove('held');
         if (triggerSingleAction) {
           if (which === 'A') releaseMicControl();
           else setEvent('SEND MESSAGE');
@@ -1117,6 +1265,32 @@
         button.addEventListener('pointercancel', () => releaseHardware(key));
         button.addEventListener('lostpointercapture', () => releaseHardware(key));
       });
+
+      [[reviewKeyA, 'A'], [reviewKeyB, 'B']].forEach(([button, key]) => {
+        if (!button) return;
+        button.addEventListener('pointerdown', (event) => {
+          button.setPointerCapture?.(event.pointerId);
+          pressHardware(key);
+        });
+        button.addEventListener('pointerup', () => releaseHardware(key));
+        button.addEventListener('pointercancel', () => releaseHardware(key));
+        button.addEventListener('lostpointercapture', () => releaseHardware(key));
+      });
+
+      const releaseReviewCombo = () => {
+        releaseHardware('B');
+        releaseHardware('A');
+        reviewCombo?.classList.remove('held');
+      };
+      reviewCombo?.addEventListener('pointerdown', (event) => {
+        reviewCombo.setPointerCapture?.(event.pointerId);
+        reviewCombo.classList.add('held');
+        pressHardware('A');
+        pressHardware('B');
+      });
+      reviewCombo?.addEventListener('pointerup', releaseReviewCombo);
+      reviewCombo?.addEventListener('pointercancel', releaseReviewCombo);
+      reviewCombo?.addEventListener('lostpointercapture', releaseReviewCombo);
       window.addEventListener('keydown', (event) => {
         if (event.repeat) return;
         const key = event.key.toLowerCase();

@@ -59,18 +59,17 @@ vendor HID transport does not stream StopWatch PCM audio to the host.
 
 The reviewable HTML version of the interface lives in [`web/index.html`](web/index.html). It models
 connection, page, touch, joystick, slider, and physical-key interactions without requiring the
-device. The included GitHub Pages workflow can publish it at the URL below after Pages is enabled
-for this public repository:
+device. The live GitHub Pages build is available below:
 
 ![Stopwatch Micro Command UI preview](docs/assets/stopwatch-micro-ui.png)
 
 <https://xuruiray.github.io/Stopwatch-Micro/>
 
 Command is the default preview. Use `?paired=0` to show Pairing and `?mic=1` to preview the Mic
-state. The yellow and blue on-screen hardware buttons also support simultaneous A+B page switching.
+state. The separate A, B, and A+B review controls mirror hold-to-talk, send, and page switching.
 
-The workflow is manual-only: enable Pages with GitHub Actions as the source in the repository
-settings, then run **Deploy web prototype** from the Actions tab.
+Changes under `web/` deploy automatically from `main`; **Deploy web prototype** can also be run
+manually from the Actions tab.
 
 ## Source layout
 
