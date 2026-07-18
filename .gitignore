@@ -60,6 +60,7 @@ debug/
 Release/
 release/
 out/
+dist/
 bin/
 obj/
 

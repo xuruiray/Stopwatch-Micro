@@ -1,5 +1,8 @@
 # Stopwatch Micro
 
+[![Firmware build](https://github.com/xuruiray/Stopwatch-Micro/actions/workflows/firmware-build.yml/badge.svg?branch=main)](https://github.com/xuruiray/Stopwatch-Micro/actions/workflows/firmware-build.yml)
+[![clang-format](https://github.com/xuruiray/Stopwatch-Micro/actions/workflows/clang-format-check.yml/badge.svg?branch=main)](https://github.com/xuruiray/Stopwatch-Micro/actions/workflows/clang-format-check.yml)
+
 Stopwatch Micro is dedicated firmware that turns the M5Stack StopWatch into an unofficial
 Codex Micro-compatible controller. It boots directly into a two-page LVGL interface and keeps
 Bluetooth Low Energy active as a system service; the original Mooncake launcher and demo apps are
@@ -102,8 +105,18 @@ idf.py build
 idf.py -p /dev/cu.usbmodem21301 flash monitor
 ```
 
+`repos.json` pins every source dependency to a full immutable commit SHA. ESP-IDF managed
+dependencies are locked separately in `dependencies.lock`.
+
 Discover the connected `/dev/cu.usb*` device first when the example port is not present. Generated
 dependency and build directories are ignored by Git.
+
+## Release artifacts
+
+Each GitHub Release contains the application firmware, bootloader, partition table, initial OTA
+data, flash arguments, a machine-readable manifest, SHA-256 checksums, and a self-contained ZIP.
+Download them from [Releases](https://github.com/xuruiray/Stopwatch-Micro/releases). The ZIP includes
+the exact `esptool` command required to flash the device.
 
 ## Serial diagnostics
 

@@ -30,13 +30,13 @@
 
 namespace {
 
-constexpr uint32_t DefaultMicTestMs   = 2000;
-constexpr uint32_t DefaultInputTestMs = 15000;
+constexpr uint32_t DefaultMicTestMs         = 2000;
+constexpr uint32_t DefaultInputTestMs       = 15000;
 constexpr uint32_t DefaultPerformanceTestMs = 3000;
-constexpr uint32_t PerformanceSendPeriodMs = 20;
-constexpr uint32_t UiCycleStepMs      = 300;
-constexpr uint32_t TransportWaitMs    = 500;
-constexpr float MicrophoneSignalFloor = 0.02f;
+constexpr uint32_t PerformanceSendPeriodMs  = 20;
+constexpr uint32_t UiCycleStepMs            = 300;
+constexpr uint32_t TransportWaitMs          = 500;
+constexpr float MicrophoneSignalFloor       = 0.02f;
 
 bool elapsed(uint32_t now, uint32_t deadline)
 {
@@ -81,8 +81,7 @@ bool SerialDebug::begin()
         return false;
     }
     _active = true;
-    std::printf("DBG READY version=%s transport=usb-serial-jtag mode=nonblocking\r\n",
-                system_config::FirmwareVersion);
+    std::printf("DBG READY version=%s transport=usb-serial-jtag mode=nonblocking\r\n", system_config::FirmwareVersion);
     std::fflush(stdout);
     return true;
 #endif
@@ -189,9 +188,10 @@ void SerialDebug::handleLine(char* line)
         const CodexMicroBleDiagnostics diagnostics = GetCodexMicroBle().diagnostics();
         const bool healthy = GetCodexMicroBle().protocolSelfTest() && diagnostics.inputDropped == 0 &&
                              diagnostics.txFailures == 0 && diagnostics.rpcErrors == 0;
-        char details[144] = {};
+        char details[144]  = {};
         std::snprintf(details, sizeof(details),
-                      "controls=12 encoder=3 report_id=6 report_bytes=63 payload_bytes=61 dropped=%lu tx_failures=%lu rpc_errors=%lu",
+                      "controls=12 encoder=3 report_id=6 report_bytes=63 payload_bytes=61 dropped=%lu tx_failures=%lu "
+                      "rpc_errors=%lu",
                       static_cast<unsigned long>(diagnostics.inputDropped),
                       static_cast<unsigned long>(diagnostics.txFailures),
                       static_cast<unsigned long>(diagnostics.rpcErrors));
@@ -246,21 +246,21 @@ void SerialDebug::handleLine(char* line)
         return;
     }
     if (std::strcmp(command, "tone") == 0) {
-        char* frequency = ::strtok_r(nullptr, " \t", &save);
-        char* duration  = ::strtok_r(nullptr, " \t", &save);
+        char* frequency   = ::strtok_r(nullptr, " \t", &save);
+        char* duration    = ::strtok_r(nullptr, " \t", &save);
         const uint32_t hz = parseUnsigned(frequency, 880, 100, 4000);
         const uint32_t ms = parseUnsigned(duration, 250, 20, 1000);
         audio::play_tone(static_cast<int>(hz), static_cast<float>(ms) / 1000.0f, 0.6f);
         char details[64] = {};
-        std::snprintf(details, sizeof(details), "hz=%lu duration_ms=%lu verify=audible",
-                      static_cast<unsigned long>(hz), static_cast<unsigned long>(ms));
+        std::snprintf(details, sizeof(details), "hz=%lu duration_ms=%lu verify=audible", static_cast<unsigned long>(hz),
+                      static_cast<unsigned long>(ms));
         result("tone", "OBSERVE", details);
         return;
     }
     if (std::strcmp(command, "vibrate") == 0) {
-        char* duration = ::strtok_r(nullptr, " \t", &save);
-        char* strength = ::strtok_r(nullptr, " \t", &save);
-        const uint32_t ms = parseUnsigned(duration, 300, 20, 3000);
+        char* duration        = ::strtok_r(nullptr, " \t", &save);
+        char* strength        = ::strtok_r(nullptr, " \t", &save);
+        const uint32_t ms     = parseUnsigned(duration, 300, 20, 3000);
         const uint32_t amount = parseUnsigned(strength, 80, 1, 100);
         GetHAL().vibrate(static_cast<uint16_t>(ms), static_cast<uint8_t>(amount));
         char details[80] = {};
@@ -270,7 +270,7 @@ void SerialDebug::handleLine(char* line)
         return;
     }
     if (std::strcmp(command, "backlight") == 0) {
-        char* level = ::strtok_r(nullptr, " \t", &save);
+        char* level               = ::strtok_r(nullptr, " \t", &save);
         const uint32_t brightness = parseUnsigned(level, 80, 10, 100);
         GetHAL().setBackLightBrightness(static_cast<int>(brightness), false);
         char details[64] = {};
@@ -289,8 +289,7 @@ void SerialDebug::handleLine(char* line)
             result("pairing-reset", "SKIP", "reason=requires_CONFIRM warning=erases_bonds_and_restarts");
             return;
         }
-        result("pairing-reset", GetCodexMicroBle().resetPairing() ? "PASS" : "FAIL",
-               "action=erase_bonds_and_restart");
+        result("pairing-reset", GetCodexMicroBle().resetPairing() ? "PASS" : "FAIL", "action=erase_bonds_and_restart");
         return;
     }
     result(command, "FAIL", "reason=unknown_command");
@@ -299,7 +298,8 @@ void SerialDebug::handleLine(char* line)
 void SerialDebug::printHelp()
 {
     std::printf("DBG HELP commands=ping,status,selftest,controls,protocol\r\n");
-    std::printf("DBG HELP commands=ui_[command|agent|mic|cycle],transport,perf_[ms],trace_[ms],mic_[ms],inputs_[ms]\r\n");
+    std::printf(
+        "DBG HELP commands=ui_[command|agent|mic|cycle],transport,perf_[ms],trace_[ms],mic_[ms],inputs_[ms]\r\n");
     std::printf("DBG HELP commands=tone_[hz]_[ms],vibrate_[ms]_[strength],backlight_[10-100],cancel\r\n");
     std::printf("DBG HELP destructive=pairing-reset_CONFIRM\r\n");
     std::fflush(stdout);
@@ -308,20 +308,22 @@ void SerialDebug::printHelp()
 
 void SerialDebug::printStatus()
 {
-    const Hal::Diagnostics hal = GetHAL().diagnostics();
-    const CodexMicroState state = GetCodexMicroBle().snapshot();
+    const Hal::Diagnostics hal         = GetHAL().diagnostics();
+    const CodexMicroState state        = GetCodexMicroBle().snapshot();
     const CodexMicroBleDiagnostics ble = GetCodexMicroBle().diagnostics();
+    std::printf("DBG STATUS firmware=%s battery=%u charging=%s ui=%s heap_free=%lu heap_min=%lu\r\n",
+                system_config::FirmwareVersion, static_cast<unsigned>(GetHAL().getBatteryLevel()),
+                onOff(GetHAL().isBatteryCharging()), _app.debugScreenName(),
+                static_cast<unsigned long>(esp_get_free_heap_size()),
+                static_cast<unsigned long>(esp_get_minimum_free_heap_size()));
     std::printf(
-        "DBG STATUS firmware=%s battery=%u charging=%s ui=%s heap_free=%lu heap_min=%lu\r\n",
-        system_config::FirmwareVersion, static_cast<unsigned>(GetHAL().getBatteryLevel()),
-        onOff(GetHAL().isBatteryCharging()), _app.debugScreenName(),
-        static_cast<unsigned long>(esp_get_free_heap_size()), static_cast<unsigned long>(esp_get_minimum_free_heap_size()));
+        "DBG STATUS hal_i2c=%s hal_pmic=%s hal_ioe=%s hal_display=%s hal_touch=%s hal_audio=%s hal_vibrator=%s "
+        "hal_buttons=%s\r\n",
+        onOff(hal.i2c), onOff(hal.pmic), onOff(hal.ioExpander), onOff(hal.display), onOff(hal.touch), onOff(hal.audio),
+        onOff(hal.vibrator), onOff(hal.buttons));
     std::printf(
-        "DBG STATUS hal_i2c=%s hal_pmic=%s hal_ioe=%s hal_display=%s hal_touch=%s hal_audio=%s hal_vibrator=%s hal_buttons=%s\r\n",
-        onOff(hal.i2c), onOff(hal.pmic), onOff(hal.ioExpander), onOff(hal.display), onOff(hal.touch),
-        onOff(hal.audio), onOff(hal.vibrator), onOff(hal.buttons));
-    std::printf(
-        "DBG STATUS ble_ready=%s ble_connected=%s advertising=%s revision=%lu queued=%lu dropped=%lu processed=%lu tx_messages=%lu tx_reports=%lu tx_failures=%lu rx_reports=%lu rpc=%lu rpc_errors=%lu pending=%lu\r\n",
+        "DBG STATUS ble_ready=%s ble_connected=%s advertising=%s revision=%lu queued=%lu dropped=%lu processed=%lu "
+        "tx_messages=%lu tx_reports=%lu tx_failures=%lu rx_reports=%lu rpc=%lu rpc_errors=%lu pending=%lu\r\n",
         onOff(state.ready && ble.hidReady), onOff(state.connected), onOff(ble.advertising),
         static_cast<unsigned long>(state.revision), static_cast<unsigned long>(ble.inputQueued),
         static_cast<unsigned long>(ble.inputDropped), static_cast<unsigned long>(ble.inputProcessed),
@@ -331,13 +333,13 @@ void SerialDebug::printStatus()
         static_cast<unsigned long>(ble.queuePending));
     const Hal::PerformanceDiagnostics performance = GetHAL().performanceDiagnostics();
     std::printf(
-        "DBG STATUS perf_lvgl_core=%d perf_tx_core=%d lvgl_calls=%lu lvgl_max_us=%lu touch_reads=%lu touch_gap_max_us=%lu queue_high=%lu tx_max_us=%lu tx_total_us=%lu\r\n",
+        "DBG STATUS perf_lvgl_core=%d perf_tx_core=%d lvgl_calls=%lu lvgl_max_us=%lu touch_reads=%lu "
+        "touch_gap_max_us=%lu queue_high=%lu tx_max_us=%lu tx_total_us=%lu\r\n",
         static_cast<int>(performance.lvglTaskCore), static_cast<int>(ble.inputTaskCore),
         static_cast<unsigned long>(performance.lvglHandlerCalls),
-        static_cast<unsigned long>(performance.lvglHandlerMaxUs),
-        static_cast<unsigned long>(performance.touchReads), static_cast<unsigned long>(performance.touchMaxGapUs),
-        static_cast<unsigned long>(ble.queueHighWater), static_cast<unsigned long>(ble.txMaxUs),
-        static_cast<unsigned long>(ble.txTotalUs));
+        static_cast<unsigned long>(performance.lvglHandlerMaxUs), static_cast<unsigned long>(performance.touchReads),
+        static_cast<unsigned long>(performance.touchMaxGapUs), static_cast<unsigned long>(ble.queueHighWater),
+        static_cast<unsigned long>(ble.txMaxUs), static_cast<unsigned long>(ble.txTotalUs));
     std::fflush(stdout);
     result("status", "PASS");
 }
@@ -348,8 +350,8 @@ void SerialDebug::runSelfTest()
         result("selftest", "FAIL", "reason=async_test_active");
         return;
     }
-    unsigned passed = 0;
-    unsigned failed = 0;
+    unsigned passed  = 0;
+    unsigned failed  = 0;
     const auto check = [&passed, &failed](const char* name, bool ok, const char* details = nullptr) {
         if (ok) {
             ++passed;
@@ -369,23 +371,23 @@ void SerialDebug::runSelfTest()
     check("hal.vibrator", hal.vibrator);
     check("hal.buttons", hal.buttons);
 
-    const bool heap_ok = heap_caps_check_integrity_all(false);
+    const bool heap_ok              = heap_caps_check_integrity_all(false);
     const std::size_t internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    const std::size_t psram_total = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
-    char heap_details[96] = {};
+    const std::size_t psram_total   = heap_caps_get_total_size(MALLOC_CAP_SPIRAM);
+    char heap_details[96]           = {};
     std::snprintf(heap_details, sizeof(heap_details), "internal_free=%lu psram_total=%lu",
                   static_cast<unsigned long>(internal_free), static_cast<unsigned long>(psram_total));
     check("memory.integrity", heap_ok && internal_free > 32768 && psram_total > 0, heap_details);
 
-    lv_display_t* display = lv_display_get_default();
-    const int32_t width = display == nullptr ? 0 : lv_display_get_horizontal_resolution(display);
-    const int32_t height = display == nullptr ? 0 : lv_display_get_vertical_resolution(display);
+    lv_display_t* display    = lv_display_get_default();
+    const int32_t width      = display == nullptr ? 0 : lv_display_get_horizontal_resolution(display);
+    const int32_t height     = display == nullptr ? 0 : lv_display_get_vertical_resolution(display);
     char display_details[64] = {};
     std::snprintf(display_details, sizeof(display_details), "width=%ld height=%ld", static_cast<long>(width),
                   static_cast<long>(height));
     check("display.geometry", display != nullptr && width > 0 && height > 0, display_details);
 
-    const uint8_t battery = GetHAL().getBatteryLevel();
+    const uint8_t battery    = GetHAL().getBatteryLevel();
     char battery_details[64] = {};
     std::snprintf(battery_details, sizeof(battery_details), "level=%u charging=%s", static_cast<unsigned>(battery),
                   onOff(GetHAL().isBatteryCharging()));
@@ -394,23 +396,24 @@ void SerialDebug::runSelfTest()
     char audio_details[64] = {};
     std::snprintf(audio_details, sizeof(audio_details), "sample_rate=%d volume=%d", GetHAL().getAudioSampleRate(),
                   GetHAL().getSpeakerVolume());
-    check("audio.configuration", GetHAL().getAudioSampleRate() == 44100 && GetHAL().getSpeakerVolume() >= 0 &&
-                                     GetHAL().getSpeakerVolume() <= 100,
+    check("audio.configuration",
+          GetHAL().getAudioSampleRate() == 44100 && GetHAL().getSpeakerVolume() >= 0 &&
+              GetHAL().getSpeakerVolume() <= 100,
           audio_details);
 
-    const CodexMicroState state = GetCodexMicroBle().snapshot();
+    const CodexMicroState state        = GetCodexMicroBle().snapshot();
     const CodexMicroBleDiagnostics ble = GetCodexMicroBle().diagnostics();
-    char ble_details[80] = {};
-    std::snprintf(ble_details, sizeof(ble_details), "ready=%s connected=%s advertising=%s",
-                  onOff(state.ready), onOff(state.connected), onOff(ble.advertising));
+    char ble_details[80]               = {};
+    std::snprintf(ble_details, sizeof(ble_details), "ready=%s connected=%s advertising=%s", onOff(state.ready),
+                  onOff(state.connected), onOff(ble.advertising));
     check("ble.service", ble.initialized && ble.hidReady && state.ready, ble_details);
     char protocol_details[112] = {};
     std::snprintf(protocol_details, sizeof(protocol_details),
                   "controls=12 encoder=3 rpc_buffer=4096 dropped=%lu tx_failures=%lu rpc_errors=%lu",
                   static_cast<unsigned long>(ble.inputDropped), static_cast<unsigned long>(ble.txFailures),
                   static_cast<unsigned long>(ble.rpcErrors));
-    check("ble.protocol", GetCodexMicroBle().protocolSelfTest() && ble.inputDropped == 0 && ble.txFailures == 0 &&
-                              ble.rpcErrors == 0,
+    check("ble.protocol",
+          GetCodexMicroBle().protocolSelfTest() && ble.inputDropped == 0 && ble.txFailures == 0 && ble.rpcErrors == 0,
           protocol_details);
     check("ui.objects", _app.debugUiReady(), _app.debugScreenName());
     check("serial.transport", true, "primary=usb-serial-jtag nonblocking=1");
@@ -423,11 +426,11 @@ void SerialDebug::runSelfTest()
 void SerialDebug::printControls()
 {
     constexpr std::size_t PhysicalControlCount = 12;
-    bool all_valid = CodexMicroControlCodes.size() >= PhysicalControlCount;
+    bool all_valid                             = CodexMicroControlCodes.size() >= PhysicalControlCount;
     for (std::size_t index = 0; index < PhysicalControlCount; ++index) {
         const char* code = CodexMicroControlCodes[index];
         const bool valid = code != nullptr && code[0] != '\0';
-        all_valid = all_valid && valid;
+        all_valid        = all_valid && valid;
         std::printf("DBG CONTROL index=%u code=%s status=%s\r\n", static_cast<unsigned>(index),
                     valid ? code : "invalid", valid ? "PASS" : "FAIL");
     }
@@ -464,13 +467,13 @@ void SerialDebug::updateMicrophoneTest(uint32_t now)
         GetHAL().setMicrophoneMeterEnabled(false);
     }
     char details[96] = {};
-    std::snprintf(details, sizeof(details), "peak=%.3f samples=%lu signal=%s",
-                  static_cast<double>(_microphone_peak), static_cast<unsigned long>(_microphone_samples),
+    std::snprintf(details, sizeof(details), "peak=%.3f samples=%lu signal=%s", static_cast<double>(_microphone_peak),
+                  static_cast<unsigned long>(_microphone_samples),
                   _microphone_peak >= MicrophoneSignalFloor ? "detected" : "quiet");
-    const char* status = _microphone_samples == 0 ? "FAIL"
+    const char* status = _microphone_samples == 0                    ? "FAIL"
                          : _microphone_peak >= MicrophoneSignalFloor ? "PASS"
-                                                                    : "OBSERVE";
-    _async_test = AsyncTest::None;
+                                                                     : "OBSERVE";
+    _async_test        = AsyncTest::None;
     result("mic", status, details);
 }
 
@@ -479,16 +482,16 @@ void SerialDebug::startInputTest(uint32_t durationMs)
     cancelAsyncTest("replaced", false);
     const AppCodexMicro::DebugInputState current = _app.debugInputState();
     _input_seen_a = _input_seen_b = _input_seen_touch = false;
-    _input_previous_a = current.buttonA;
-    _input_previous_b = current.buttonB;
-    _input_previous_touch = current.touch;
+    _input_previous_a                                 = current.buttonA;
+    _input_previous_b                                 = current.buttonB;
+    _input_previous_touch                             = current.touch;
     _input_min_x = _input_min_y = 32767;
     _input_max_x = _input_max_y = -1;
     _app.debugSetInputCapture(true);
     _async_test       = AsyncTest::Inputs;
     _test_started_ms  = GetHAL().millis();
     _test_deadline_ms = _test_started_ms + durationMs;
-    char details[96] = {};
+    char details[96]  = {};
     std::snprintf(details, sizeof(details), "duration_ms=%lu capture=1 expected=button_a,button_b,touch",
                   static_cast<unsigned long>(durationMs));
     result("inputs", "RUNNING", details);
@@ -507,18 +510,18 @@ void SerialDebug::updateInputTest(uint32_t now)
     }
     if (state.touch) {
         _input_seen_touch = true;
-        _input_min_x = std::min(_input_min_x, state.x);
-        _input_min_y = std::min(_input_min_y, state.y);
-        _input_max_x = std::max(_input_max_x, state.x);
-        _input_max_y = std::max(_input_max_y, state.y);
+        _input_min_x      = std::min(_input_min_x, state.x);
+        _input_min_y      = std::min(_input_min_y, state.y);
+        _input_max_x      = std::max(_input_max_x, state.x);
+        _input_max_y      = std::max(_input_max_y, state.y);
         if (!_input_previous_touch) {
             std::printf("DBG INPUT event=touch_pressed x=%d y=%d\r\n", state.x, state.y);
         }
     } else if (_input_previous_touch) {
         std::printf("DBG INPUT event=touch_released\r\n");
     }
-    _input_previous_a = state.buttonA;
-    _input_previous_b = state.buttonB;
+    _input_previous_a     = state.buttonA;
+    _input_previous_b     = state.buttonB;
     _input_previous_touch = state.touch;
     std::fflush(stdout);
 
@@ -531,7 +534,7 @@ void SerialDebug::updateInputTest(uint32_t now)
                   onOff(_input_seen_a), onOff(_input_seen_b), onOff(_input_seen_touch), _input_min_x, _input_min_y,
                   _input_max_x, _input_max_y);
     const bool complete = _input_seen_a && _input_seen_b && _input_seen_touch;
-    _async_test = AsyncTest::None;
+    _async_test         = AsyncTest::None;
     result("inputs", complete ? "PASS" : "FAIL", details);
 }
 
@@ -554,17 +557,17 @@ void SerialDebug::updateUiCycle(uint32_t now)
     if (!elapsed(now, _test_deadline_ms)) {
         return;
     }
-    bool ok = false;
+    bool ok              = false;
     const char* expected = nullptr;
     if (_ui_cycle_stage == 0) {
         expected = "agent";
-        ok = _app.debugSetScreen(AppCodexMicro::DebugScreen::Agent);
+        ok       = _app.debugSetScreen(AppCodexMicro::DebugScreen::Agent);
     } else if (_ui_cycle_stage == 1) {
         expected = "mic";
-        ok = _app.debugSetScreen(AppCodexMicro::DebugScreen::Mic);
+        ok       = _app.debugSetScreen(AppCodexMicro::DebugScreen::Mic);
     } else {
         expected = "command";
-        ok = _app.debugSetScreen(AppCodexMicro::DebugScreen::Command);
+        ok       = _app.debugSetScreen(AppCodexMicro::DebugScreen::Command);
     }
     ok = ok && std::strcmp(_app.debugScreenName(), expected) == 0;
     std::printf("DBG UI stage=%u expected=%s actual=%s status=%s\r\n", static_cast<unsigned>(_ui_cycle_stage + 1),
@@ -587,9 +590,9 @@ void SerialDebug::startTransportTest()
         return;
     }
     const CodexMicroBleDiagnostics before = GetCodexMicroBle().diagnostics();
-    _transport_tx_messages = before.txMessages;
-    _transport_tx_reports = before.txReports;
-    _transport_tx_failures = before.txFailures;
+    _transport_tx_messages                = before.txMessages;
+    _transport_tx_reports                 = before.txReports;
+    _transport_tx_failures                = before.txFailures;
     if (!GetCodexMicroBle().sendJoystick(0.0f, 0.0f)) {
         result("transport", "FAIL", "reason=neutral_report_not_queued");
         return;
@@ -606,8 +609,8 @@ void SerialDebug::updateTransportTest(uint32_t now)
         return;
     }
     const CodexMicroBleDiagnostics after = GetCodexMicroBle().diagnostics();
-    const bool sent = after.txMessages > _transport_tx_messages && after.txReports > _transport_tx_reports &&
-                      after.txFailures == _transport_tx_failures;
+    const bool sent   = after.txMessages > _transport_tx_messages && after.txReports > _transport_tx_reports &&
+                        after.txFailures == _transport_tx_failures;
     char details[112] = {};
     std::snprintf(details, sizeof(details), "messages_delta=%lu reports_delta=%lu failures_delta=%lu",
                   static_cast<unsigned long>(after.txMessages - _transport_tx_messages),
@@ -627,23 +630,23 @@ void SerialDebug::startPerformanceTest(uint32_t durationMs, bool generateTraffic
     GetHAL().resetPerformanceDiagnostics();
     GetCodexMicroBle().resetPerformanceDiagnostics();
     const CodexMicroBleDiagnostics before = GetCodexMicroBle().diagnostics();
-    _performance_input_queued = before.inputQueued;
-    _performance_input_dropped = before.inputDropped;
-    _performance_input_processed = before.inputProcessed;
-    _performance_tx_messages = before.txMessages;
-    _performance_tx_reports = before.txReports;
-    _performance_tx_failures = before.txFailures;
-    _performance_generated = 0;
-    _performance_accepted = 0;
-    _performance_draining = false;
-    _performance_generate_traffic = generateTraffic;
-    _performance_loop_max_gap_us = 0;
-    _performance_last_poll_us = esp_timer_get_time();
-    _test_started_ms = GetHAL().millis();
-    _performance_next_send_ms = _test_started_ms;
-    _test_deadline_ms = _test_started_ms + durationMs;
-    _async_test = AsyncTest::Performance;
-    char details[80] = {};
+    _performance_input_queued             = before.inputQueued;
+    _performance_input_dropped            = before.inputDropped;
+    _performance_input_processed          = before.inputProcessed;
+    _performance_tx_messages              = before.txMessages;
+    _performance_tx_reports               = before.txReports;
+    _performance_tx_failures              = before.txFailures;
+    _performance_generated                = 0;
+    _performance_accepted                 = 0;
+    _performance_draining                 = false;
+    _performance_generate_traffic         = generateTraffic;
+    _performance_loop_max_gap_us          = 0;
+    _performance_last_poll_us             = esp_timer_get_time();
+    _test_started_ms                      = GetHAL().millis();
+    _performance_next_send_ms             = _test_started_ms;
+    _test_deadline_ms                     = _test_started_ms + durationMs;
+    _async_test                           = AsyncTest::Performance;
+    char details[80]                      = {};
     std::snprintf(details, sizeof(details), "duration_ms=%lu mode=%s rate_hz=%u",
                   static_cast<unsigned long>(durationMs), generateTraffic ? "synthetic" : "observe",
                   generateTraffic ? 50U : 0U);
@@ -672,39 +675,41 @@ void SerialDebug::updatePerformanceTest(uint32_t now)
 
     if (!_performance_draining && elapsed(now, _test_deadline_ms)) {
         _performance_draining = true;
-        _test_deadline_ms = now + 250;
+        _test_deadline_ms     = now + 250;
         return;
     }
     if (!_performance_draining || !elapsed(now, _test_deadline_ms)) {
         return;
     }
 
-    const CodexMicroBleDiagnostics after = GetCodexMicroBle().diagnostics();
+    const CodexMicroBleDiagnostics after      = GetCodexMicroBle().diagnostics();
     const Hal::PerformanceDiagnostics display = GetHAL().performanceDiagnostics();
-    const uint32_t queued = after.inputQueued - _performance_input_queued;
-    const uint32_t dropped = after.inputDropped - _performance_input_dropped;
-    const uint32_t processed = after.inputProcessed - _performance_input_processed;
-    const uint32_t messages = after.txMessages - _performance_tx_messages;
-    const uint32_t reports = after.txReports - _performance_tx_reports;
-    const uint32_t failures = after.txFailures - _performance_tx_failures;
+    const uint32_t queued                     = after.inputQueued - _performance_input_queued;
+    const uint32_t dropped                    = after.inputDropped - _performance_input_dropped;
+    const uint32_t processed                  = after.inputProcessed - _performance_input_processed;
+    const uint32_t messages                   = after.txMessages - _performance_tx_messages;
+    const uint32_t reports                    = after.txReports - _performance_tx_reports;
+    const uint32_t failures                   = after.txFailures - _performance_tx_failures;
     const bool activity_ok = _performance_generate_traffic
                                  ? _performance_generated >= 40 && _performance_accepted == _performance_generated &&
                                        queued == _performance_accepted
                                  : queued > 0 && processed > 0;
-    const bool responsive = activity_ok && dropped == 0 && processed > 0 && messages > 0 && reports > 0 &&
-                            failures == 0 && display.touchReads > 0 &&
-                            display.touchMaxGapUs <= 50000 && _performance_loop_max_gap_us <= 50000;
-    char details[320] = {};
-    std::snprintf(
-        details, sizeof(details),
-        "generated=%lu accepted=%lu queued=%lu processed=%lu dropped=%lu messages=%lu reports=%lu failures=%lu queue_high=%lu tx_max_us=%lu loop_gap_max_us=%lu lvgl_core=%d tx_core=%d lvgl_max_us=%lu touch_reads=%lu touch_gap_max_us=%lu",
-        static_cast<unsigned long>(_performance_generated), static_cast<unsigned long>(_performance_accepted),
-        static_cast<unsigned long>(queued), static_cast<unsigned long>(processed), static_cast<unsigned long>(dropped),
-        static_cast<unsigned long>(messages), static_cast<unsigned long>(reports), static_cast<unsigned long>(failures),
-        static_cast<unsigned long>(after.queueHighWater), static_cast<unsigned long>(after.txMaxUs),
-        static_cast<unsigned long>(_performance_loop_max_gap_us), static_cast<int>(display.lvglTaskCore),
-        static_cast<int>(after.inputTaskCore), static_cast<unsigned long>(display.lvglHandlerMaxUs),
-        static_cast<unsigned long>(display.touchReads), static_cast<unsigned long>(display.touchMaxGapUs));
+    const bool responsive  = activity_ok && dropped == 0 && processed > 0 && messages > 0 && reports > 0 &&
+                             failures == 0 && display.touchReads > 0 && display.touchMaxGapUs <= 50000 &&
+                             _performance_loop_max_gap_us <= 50000;
+    char details[320]      = {};
+    std::snprintf(details, sizeof(details),
+                  "generated=%lu accepted=%lu queued=%lu processed=%lu dropped=%lu messages=%lu reports=%lu "
+                  "failures=%lu queue_high=%lu tx_max_us=%lu loop_gap_max_us=%lu lvgl_core=%d tx_core=%d "
+                  "lvgl_max_us=%lu touch_reads=%lu touch_gap_max_us=%lu",
+                  static_cast<unsigned long>(_performance_generated), static_cast<unsigned long>(_performance_accepted),
+                  static_cast<unsigned long>(queued), static_cast<unsigned long>(processed),
+                  static_cast<unsigned long>(dropped), static_cast<unsigned long>(messages),
+                  static_cast<unsigned long>(reports), static_cast<unsigned long>(failures),
+                  static_cast<unsigned long>(after.queueHighWater), static_cast<unsigned long>(after.txMaxUs),
+                  static_cast<unsigned long>(_performance_loop_max_gap_us), static_cast<int>(display.lvglTaskCore),
+                  static_cast<int>(after.inputTaskCore), static_cast<unsigned long>(display.lvglHandlerMaxUs),
+                  static_cast<unsigned long>(display.touchReads), static_cast<unsigned long>(display.touchMaxGapUs));
     _async_test = AsyncTest::None;
     result(_performance_generate_traffic ? "perf" : "trace", responsive ? "PASS" : "FAIL", details);
 }
@@ -760,8 +765,8 @@ uint32_t SerialDebug::parseUnsigned(const char* value, uint32_t fallback, uint32
     if (value == nullptr || value[0] == '\0') {
         return fallback;
     }
-    char* end = nullptr;
-    errno = 0;
+    char* end                  = nullptr;
+    errno                      = 0;
     const unsigned long parsed = std::strtoul(value, &end, 10);
     if (errno != 0 || end == value || *end != '\0') {
         return fallback;

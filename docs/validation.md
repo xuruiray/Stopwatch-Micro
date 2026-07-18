@@ -9,7 +9,7 @@ python3 -m py_compile fetch_repos.py
 git diff --check
 ```
 
-Confirm that `repos.json` contains pinned versions and that `fetch_repos.py` fails when a local patch
+Confirm that `repos.json` contains immutable commit SHAs and that `fetch_repos.py` fails when a local patch
 matches neither the clean nor already-applied state.
 
 ## Browser prototype
@@ -32,6 +32,8 @@ idf.py build
 ```
 
 The build must complete without compile/link errors and fit in the configured application partition.
+Run `tools/package_release.py` and verify both the individual-file `SHA256SUMS` and ZIP checksum
+before uploading release assets.
 
 ## USB serial diagnostics
 

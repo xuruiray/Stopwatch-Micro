@@ -60,14 +60,14 @@ private:
 class Hal {
 public:
     struct Diagnostics {
-        bool i2c       = false;
-        bool pmic      = false;
+        bool i2c        = false;
+        bool pmic       = false;
         bool ioExpander = false;
-        bool display   = false;
-        bool touch     = false;
-        bool audio     = false;
-        bool vibrator  = false;
-        bool buttons   = false;
+        bool display    = false;
+        bool touch      = false;
+        bool audio      = false;
+        bool vibrator   = false;
+        bool buttons    = false;
     };
 
     struct PerformanceDiagnostics {
@@ -148,8 +148,8 @@ private:
 
     i2c_bus_handle_t _i2c_bus = nullptr;
     ButtonConfig _btn_config;
-    int _bl_brightness = 80;
-    int _spk_volume    = 80;
+    int _bl_brightness  = 80;
+    int _spk_volume     = 80;
     bool _buttons_ready = false;
 
     void i2c_init();

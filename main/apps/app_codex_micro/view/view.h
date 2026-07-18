@@ -115,25 +115,25 @@ private:
     std::array<KeyContext, 6> _agent_contexts     = {};
     std::array<IconContext, 6> _icon_contexts     = {};
 
-    lv_obj_t* _joystick      = nullptr;
-    lv_obj_t* _joystick_knob = nullptr;
-    bool _joystick_active    = false;
-    float _joystick_angle    = 0.0f;
-    float _joystick_distance = 0.0f;
+    lv_obj_t* _joystick               = nullptr;
+    lv_obj_t* _joystick_knob          = nullptr;
+    bool _joystick_active             = false;
+    float _joystick_angle             = 0.0f;
+    float _joystick_distance          = 0.0f;
     uint32_t _joystick_last_send_tick = 0;
 
-    lv_obj_t* _dial               = nullptr;
-    lv_obj_t* _dial_thumb         = nullptr;
-    bool _dial_pressed            = false;
-    bool _dial_rotating           = false;
-    bool _dial_returning          = false;
-    bool _dial_host_press_active  = false;
-    int _dial_step                = 18;
-    float _dial_visual_step       = 18.0f;
-    float _dial_return_start_step = 18.0f;
-    uint32_t _dial_press_tick     = 0;
-    uint32_t _dial_release_tick   = 0;
-    uint32_t _dial_return_tick    = 0;
+    lv_obj_t* _dial                   = nullptr;
+    lv_obj_t* _dial_thumb             = nullptr;
+    bool _dial_pressed                = false;
+    bool _dial_rotating               = false;
+    bool _dial_returning              = false;
+    bool _dial_host_press_active      = false;
+    int _dial_step                    = 18;
+    float _dial_visual_step           = 18.0f;
+    float _dial_return_start_step     = 18.0f;
+    uint32_t _dial_press_tick         = 0;
+    uint32_t _dial_release_tick       = 0;
+    uint32_t _dial_return_tick        = 0;
     uint32_t _dial_last_feedback_tick = 0;
 
     bool _touch_pressed                = false;

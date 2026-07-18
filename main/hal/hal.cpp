@@ -47,14 +47,14 @@ void Hal::init()
 Hal::Diagnostics Hal::diagnostics() const
 {
     return {
-        .i2c = _i2c_bus != nullptr,
-        .pmic = pmic_ready(),
+        .i2c        = _i2c_bus != nullptr,
+        .pmic       = pmic_ready(),
         .ioExpander = ioe_ready(),
-        .display = display_ready(),
-        .touch = touch_ready(),
-        .audio = audio_ready(),
-        .vibrator = vibrator_ready(),
-        .buttons = _buttons_ready,
+        .display    = display_ready(),
+        .touch      = touch_ready(),
+        .audio      = audio_ready(),
+        .vibrator   = vibrator_ready(),
+        .buttons    = _buttons_ready,
     };
 }
 

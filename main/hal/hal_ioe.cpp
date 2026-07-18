@@ -17,9 +17,9 @@ static std::unique_ptr<M5IOE1> _ioe;
 
 namespace {
 
-constexpr uint8_t _ioe_addr_primary   = 0x4F;
-constexpr uint8_t _ioe_addr_secondary = 0x6F;
-constexpr int L3bEnableMaxAttempts    = 10;
+constexpr uint8_t _ioe_addr_primary     = 0x4F;
+constexpr uint8_t _ioe_addr_secondary   = 0x6F;
+constexpr int L3bEnableMaxAttempts      = 10;
 constexpr BaseType_t PeripheralTaskCore = 0;
 
 }  // namespace
@@ -140,8 +140,8 @@ static class Vibrator {
 public:
     bool init()
     {
-        if (xTaskCreatePinnedToCore([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024,
-                                    this, 5, &_task_handle, PeripheralTaskCore) != pdPASS) {
+        if (xTaskCreatePinnedToCore([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024, this,
+                                    5, &_task_handle, PeripheralTaskCore) != pdPASS) {
             mclog::tagError(_tag, "failed to create vibrator task");
             return false;
         }

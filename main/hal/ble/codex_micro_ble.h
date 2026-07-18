@@ -44,24 +44,24 @@ struct CodexMicroState {
 };
 
 struct CodexMicroBleDiagnostics {
-    bool initialized     = false;
-    bool hidReady        = false;
-    bool connected       = false;
-    bool advertising     = false;
-    uint32_t inputQueued = 0;
-    uint32_t inputDropped = 0;
+    bool initialized        = false;
+    bool hidReady           = false;
+    bool connected          = false;
+    bool advertising        = false;
+    uint32_t inputQueued    = 0;
+    uint32_t inputDropped   = 0;
     uint32_t inputProcessed = 0;
-    uint32_t txMessages  = 0;
-    uint32_t txReports   = 0;
-    uint32_t txFailures  = 0;
-    uint32_t rxReports   = 0;
-    uint32_t rpcMessages = 0;
-    uint32_t rpcErrors   = 0;
-    uint32_t queuePending = 0;
+    uint32_t txMessages     = 0;
+    uint32_t txReports      = 0;
+    uint32_t txFailures     = 0;
+    uint32_t rxReports      = 0;
+    uint32_t rpcMessages    = 0;
+    uint32_t rpcErrors      = 0;
+    uint32_t queuePending   = 0;
     uint32_t queueHighWater = 0;
-    uint32_t txMaxUs      = 0;
-    uint32_t txTotalUs    = 0;
-    int8_t inputTaskCore  = -1;
+    uint32_t txMaxUs        = 0;
+    uint32_t txTotalUs      = 0;
+    int8_t inputTaskCore    = -1;
 };
 
 class CodexMicroBle {
@@ -92,13 +92,13 @@ private:
     };
 
     struct InputEvent {
-        InputEventKind kind          = InputEventKind::Key;
-        CodexMicroControl control    = CodexMicroControl::Agent1;
-        CodexMicroKeyAction action   = CodexMicroKeyAction::Release;
-        int8_t agent                 = -1;
-        uint16_t repeat              = 1;
-        float angle                  = 0.0f;
-        float distance               = 0.0f;
+        InputEventKind kind        = InputEventKind::Key;
+        CodexMicroControl control  = CodexMicroControl::Agent1;
+        CodexMicroKeyAction action = CodexMicroKeyAction::Release;
+        int8_t agent               = -1;
+        uint16_t repeat            = 1;
+        float angle                = 0.0f;
+        float distance             = 0.0f;
     };
 
     static void gapEventCallback(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t* param);
@@ -144,19 +144,19 @@ private:
     std::atomic_bool _advertising             = false;
     std::atomic_bool _pairing_reset_requested = false;
     std::atomic_int _pairing_bonds_pending    = 0;
-    std::atomic_uint32_t _input_queued         = 0;
-    std::atomic_uint32_t _input_dropped        = 0;
-    std::atomic_uint32_t _input_processed      = 0;
-    std::atomic_uint32_t _tx_messages          = 0;
-    std::atomic_uint32_t _tx_reports           = 0;
-    std::atomic_uint32_t _tx_failures          = 0;
-    std::atomic_uint32_t _rx_reports           = 0;
-    std::atomic_uint32_t _rpc_messages         = 0;
-    std::atomic_uint32_t _rpc_errors           = 0;
-    std::atomic_uint32_t _queue_high_water     = 0;
-    std::atomic_uint32_t _tx_max_us            = 0;
-    std::atomic_uint32_t _tx_total_us          = 0;
-    std::atomic_int8_t _input_task_core        = -1;
+    std::atomic_uint32_t _input_queued        = 0;
+    std::atomic_uint32_t _input_dropped       = 0;
+    std::atomic_uint32_t _input_processed     = 0;
+    std::atomic_uint32_t _tx_messages         = 0;
+    std::atomic_uint32_t _tx_reports          = 0;
+    std::atomic_uint32_t _tx_failures         = 0;
+    std::atomic_uint32_t _rx_reports          = 0;
+    std::atomic_uint32_t _rpc_messages        = 0;
+    std::atomic_uint32_t _rpc_errors          = 0;
+    std::atomic_uint32_t _queue_high_water    = 0;
+    std::atomic_uint32_t _tx_max_us           = 0;
+    std::atomic_uint32_t _tx_total_us         = 0;
+    std::atomic_int8_t _input_task_core       = -1;
 };
 
 CodexMicroBle& GetCodexMicroBle();

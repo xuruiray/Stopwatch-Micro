@@ -203,13 +203,10 @@ uint32_t softenedAmbientColor(uint32_t color, float brightness)
     const float green   = static_cast<float>((color >> 8) & 0xFF);
     const float blue    = static_cast<float>(color & 0xFF);
     const float neutral = (red + green + blue) / 3.0f;
-    const auto soften   = [neutral](float channel) {
-        return neutral + (channel - neutral) * AmbientSaturationScale;
-    };
-    const uint32_t softened =
-        (static_cast<uint32_t>(std::lround(soften(red))) << 16) |
-        (static_cast<uint32_t>(std::lround(soften(green))) << 8) |
-        static_cast<uint32_t>(std::lround(soften(blue)));
+    const auto soften   = [neutral](float channel) { return neutral + (channel - neutral) * AmbientSaturationScale; };
+    const uint32_t softened = (static_cast<uint32_t>(std::lround(soften(red))) << 16) |
+                              (static_cast<uint32_t>(std::lround(soften(green))) << 8) |
+                              static_cast<uint32_t>(std::lround(soften(blue)));
     return scaledColor(softened, brightness * AmbientBrightnessScale);
 }
 
@@ -990,9 +987,9 @@ void CodexMicroView::update(const CodexMicroState& state)
     }
 
     if (_page == Page::Command) {
-        const bool keys_animated = state.keys.effect == CodexMicroLightEffect::Breath ||
-                                   state.keys.effect == CodexMicroLightEffect::ShallowBreath ||
-                                   state.keys.effect == CodexMicroLightEffect::Snake;
+        const bool keys_animated    = state.keys.effect == CodexMicroLightEffect::Breath ||
+                                      state.keys.effect == CodexMicroLightEffect::ShallowBreath ||
+                                      state.keys.effect == CodexMicroLightEffect::Snake;
         const bool keys_refresh_due = tick - _command_last_update_tick >= AnimatedLightingRefreshPeriodMs;
         if (state_changed || _page_dirty || (keys_animated && keys_refresh_due && !input_active)) {
             updateCommandLighting(state);
@@ -1060,7 +1057,7 @@ void CodexMicroView::keyEvent(lv_event_t* event)
         context->active = false;
     }
     if (context->agent < 0) {
-        const auto begin = context->owner->_command_contexts.begin();
+        const auto begin       = context->owner->_command_contexts.begin();
         const std::size_t slot = static_cast<std::size_t>(context - &(*begin));
         context->owner->invalidateCommandSegment(slot);
     }
@@ -1095,9 +1092,9 @@ void CodexMicroView::commandDeckEvent(lv_event_t* event)
     lv_draw_vector_dsc_set_stroke_join(vector, LV_VECTOR_STROKE_JOIN_ROUND);
     for (std::size_t index = 0; index < QuarterTurns.size(); ++index) {
         const lv_area_t segment_area = commandSegmentArea(center_x, center_y, index);
-        const lv_area_t& clip_area = layer->buf_area;
-        const bool intersects = segment_area.x1 <= clip_area.x2 && segment_area.x2 >= clip_area.x1 &&
-                                segment_area.y1 <= clip_area.y2 && segment_area.y2 >= clip_area.y1;
+        const lv_area_t& clip_area   = layer->buf_area;
+        const bool intersects        = segment_area.x1 <= clip_area.x2 && segment_area.x2 >= clip_area.x1 &&
+                                       segment_area.y1 <= clip_area.y2 && segment_area.y2 >= clip_area.y1;
         if (!intersects) {
             continue;
         }
@@ -1238,7 +1235,7 @@ void CodexMicroView::dialTrackEvent(lv_event_t* event)
 
 void CodexMicroView::dialHitTestEvent(lv_event_t* event)
 {
-    auto* owner               = static_cast<CodexMicroView*>(lv_event_get_user_data(event));
+    auto* owner              = static_cast<CodexMicroView*>(lv_event_get_user_data(event));
     lv_hit_test_info_t* info = lv_event_get_hit_test_info(event);
     if (owner == nullptr || owner->_dial_thumb == nullptr || info == nullptr || info->point == nullptr) {
         return;
@@ -1280,11 +1277,11 @@ void CodexMicroView::updateJoystickFromPoint(const lv_point_t& point)
     const float wrapped_delta = std::min(angle_delta, 1.0f - angle_delta);
     const bool report_changed = std::fabs(host_distance - _joystick_distance) >= JoystickDistanceSendThreshold ||
                                 (host_distance > 0.0f && wrapped_delta >= JoystickAngleSendThreshold);
-    const uint32_t tick = lv_tick_get();
+    const uint32_t tick       = lv_tick_get();
     const bool report_due = _joystick_last_send_tick == 0 || tick - _joystick_last_send_tick >= JoystickReportPeriodMs;
     if (report_changed && report_due) {
-        _joystick_angle    = angle;
-        _joystick_distance = host_distance;
+        _joystick_angle          = angle;
+        _joystick_distance       = host_distance;
         _joystick_last_send_tick = tick;
         GetCodexMicroBle().sendJoystick(angle, host_distance);
     }
@@ -1295,8 +1292,8 @@ void CodexMicroView::releaseJoystick()
     if (_joystick_active && _joystick_distance > 0.0f) {
         GetCodexMicroBle().sendJoystick(_joystick_angle, 0.0f);
     }
-    _joystick_active   = false;
-    _joystick_distance = 0.0f;
+    _joystick_active         = false;
+    _joystick_distance       = 0.0f;
     _joystick_last_send_tick = 0;
     if (_joystick_knob != nullptr) {
         lv_obj_set_pos(_joystick_knob, JoystickNeutralPosition, JoystickNeutralPosition);
@@ -1389,8 +1386,8 @@ void CodexMicroView::updateDialFromPoint(const lv_point_t& point)
         return;
     }
 
-    _dial_rotating      = true;
-    const int direction = next_step > _dial_step ? 1 : -1;
+    _dial_rotating          = true;
+    const int direction     = next_step > _dial_step ? 1 : -1;
     const int emitted_steps = std::abs(next_step - _dial_step);
     _dial_step              = next_step;
     if (emitted_steps > 0) {
@@ -1440,10 +1437,10 @@ void CodexMicroView::updateDialReturn()
 
 void CodexMicroView::resetDial()
 {
-    _dial_pressed   = false;
-    _dial_rotating  = false;
-    _dial_returning = false;
-    _dial_step      = DialCenterStep;
+    _dial_pressed            = false;
+    _dial_rotating           = false;
+    _dial_returning          = false;
+    _dial_step               = DialCenterStep;
     _dial_last_feedback_tick = 0;
     setDialVisualStep(static_cast<float>(DialCenterStep));
     if (_dial_thumb != nullptr) {

@@ -2,38 +2,38 @@
     {
         "url": "https://github.com/Forairaaaaa/mooncake.git",
         "path": "components/mooncake",
-        "branch": "v2.3.3"
+        "commit": "572a7e488641f1c3f22e85d65c27f095ecf27d12"
     },
     {
         "url": "https://github.com/Forairaaaaa/mooncake_log.git",
         "path": "components/mooncake_log",
-        "branch": "v1.5.0"
+        "commit": "554d55cd8c6e551b911b99cad274a46929f05bae"
     },
     {
         "url": "https://github.com/Forairaaaaa/smooth_ui_toolkit.git",
         "path": "components/smooth_ui_toolkit",
-        "branch": "v2.12.1"
+        "commit": "2c8b6c572192047636c78ea3ae95dc5be4955fce"
     },
     {
         "url": "https://github.com/m5stack/M5GFX.git",
         "path": "components/M5GFX",
-        "branch": "0.2.19"
+        "commit": "53a7184601f3667b030ba141c58b87ce2acfaa2a"
     },
     {
         "url": "https://github.com/lvgl/lvgl.git",
         "path": "components/lvgl",
-        "branch": "v9.5.0"
+        "commit": "85aa60d18b3d5e5588d7b247abf90198f07c8a63"
     },
     {
         "url": "https://github.com/m5stack/M5IOE1",
         "path": "components/M5IOE1",
-        "branch": "1.0.8",
+        "commit": "37db04861687858b6748f5dbd1a84439a6635c46",
         "patch": "patches/M5IOE1.patch"
     },
     {
         "url": "https://github.com/m5stack/M5PM1",
         "path": "components/M5PM1",
-        "branch": "1.0.6",
+        "commit": "8f1f1a60b3040088cd0ca2b9eb9d024ccc4d907f",
         "patch": "patches/M5PM1.patch"
     }
 ]

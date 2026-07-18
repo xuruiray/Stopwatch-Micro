@@ -259,13 +259,13 @@ bool Hal::touch_ready() const
 #include <atomic>
 
 static SemaphoreHandle_t xGuiSemaphore;
-static std::atomic<bool> _lvgl_update_enabled = false;
-static std::atomic<uint32_t> _lvgl_handler_calls = 0;
+static std::atomic<bool> _lvgl_update_enabled     = false;
+static std::atomic<uint32_t> _lvgl_handler_calls  = 0;
 static std::atomic<uint32_t> _lvgl_handler_max_us = 0;
-static std::atomic<uint32_t> _touch_reads = 0;
-static std::atomic<uint32_t> _touch_max_gap_us = 0;
-static std::atomic<int8_t> _lvgl_task_core = -1;
-static std::atomic<int64_t> _touch_last_read_us = 0;
+static std::atomic<uint32_t> _touch_reads         = 0;
+static std::atomic<uint32_t> _touch_max_gap_us    = 0;
+static std::atomic<int8_t> _lvgl_task_core        = -1;
+static std::atomic<int64_t> _touch_last_read_us   = 0;
 
 #define LV_BUFFER_LINE          120
 #define LV_TOUCH_READ_PERIOD_MS 8
@@ -274,11 +274,10 @@ constexpr uint32_t LVGL_STACK_SAMPLE_COUNT = 20;
 constexpr UBaseType_t LVGL_TASK_PRIORITY   = 2;
 constexpr BaseType_t LVGL_TASK_CORE        = 1;
 
-static void update_max(std::atomic<uint32_t>& destination, uint32_t value)
+static void update_max(std::atomic<uint32_t> &destination, uint32_t value)
 {
     uint32_t previous = destination.load(std::memory_order_relaxed);
-    while (previous < value &&
-           !destination.compare_exchange_weak(previous, value, std::memory_order_relaxed)) {
+    while (previous < value && !destination.compare_exchange_weak(previous, value, std::memory_order_relaxed)) {
     }
 }
 
@@ -356,7 +355,7 @@ static void lvgl_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
 
 static void lvgl_read_cb(lv_indev_t *, lv_indev_data_t *data)
 {
-    const int64_t now_us = esp_timer_get_time();
+    const int64_t now_us      = esp_timer_get_time();
     const int64_t previous_us = _touch_last_read_us.exchange(now_us, std::memory_order_relaxed);
     _touch_reads.fetch_add(1, std::memory_order_relaxed);
     if (previous_us > 0 && now_us > previous_us) {
@@ -427,8 +426,8 @@ void Hal::lvgl_init()
     // Bluetooth controller/host and main_task are pinned to CPU0 by sdkconfig.
     // Keep rendering and touch sampling on CPU1 so HID traffic cannot steal a
     // frame, and give it priority over background application workers.
-    if (xTaskCreatePinnedToCore(lvgl_rtos_task, "lvgl_rtos_task", LVGL_TASK_STACK_SIZE, nullptr,
-                                LVGL_TASK_PRIORITY, nullptr, LVGL_TASK_CORE) != pdPASS) {
+    if (xTaskCreatePinnedToCore(lvgl_rtos_task, "lvgl_rtos_task", LVGL_TASK_STACK_SIZE, nullptr, LVGL_TASK_PRIORITY,
+                                nullptr, LVGL_TASK_CORE) != pdPASS) {
         ESP_LOGE("HAL-Display", "failed to create LVGL task with %u-byte stack",
                  static_cast<unsigned>(LVGL_TASK_STACK_SIZE));
         ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
@@ -461,9 +460,9 @@ Hal::PerformanceDiagnostics Hal::performanceDiagnostics() const
     return {
         .lvglHandlerCalls = _lvgl_handler_calls.load(std::memory_order_relaxed),
         .lvglHandlerMaxUs = _lvgl_handler_max_us.load(std::memory_order_relaxed),
-        .touchReads = _touch_reads.load(std::memory_order_relaxed),
-        .touchMaxGapUs = _touch_max_gap_us.load(std::memory_order_relaxed),
-        .lvglTaskCore = _lvgl_task_core.load(std::memory_order_relaxed),
+        .touchReads       = _touch_reads.load(std::memory_order_relaxed),
+        .touchMaxGapUs    = _touch_max_gap_us.load(std::memory_order_relaxed),
+        .lvglTaskCore     = _lvgl_task_core.load(std::memory_order_relaxed),
     };
 }
 

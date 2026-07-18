@@ -23,13 +23,13 @@
 
 namespace {
 
-constexpr std::string_view Tag = "HAL-Audio";
-constexpr i2s_port_t I2sPort   = I2S_NUM_0;
-constexpr gpio_num_t I2sMclk   = GPIO_NUM_18;
-constexpr gpio_num_t I2sBclk   = GPIO_NUM_17;
-constexpr gpio_num_t I2sLrck   = GPIO_NUM_15;
-constexpr gpio_num_t I2sDin    = GPIO_NUM_16;
-constexpr gpio_num_t I2sDout   = GPIO_NUM_21;
+constexpr std::string_view Tag     = "HAL-Audio";
+constexpr i2s_port_t I2sPort       = I2S_NUM_0;
+constexpr gpio_num_t I2sMclk       = GPIO_NUM_18;
+constexpr gpio_num_t I2sBclk       = GPIO_NUM_17;
+constexpr gpio_num_t I2sLrck       = GPIO_NUM_15;
+constexpr gpio_num_t I2sDin        = GPIO_NUM_16;
+constexpr gpio_num_t I2sDout       = GPIO_NUM_21;
 constexpr BaseType_t AudioTaskCore = 0;
 
 class AudioCodec {
@@ -78,8 +78,8 @@ public:
             pdPASS) {
             ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
         }
-        if (xTaskCreatePinnedToCore(microphoneTaskEntry, "mic_meter_task", 4 * 1024, this, 4,
-                                    &_microphone_task_handle, AudioTaskCore) != pdPASS) {
+        if (xTaskCreatePinnedToCore(microphoneTaskEntry, "mic_meter_task", 4 * 1024, this, 4, &_microphone_task_handle,
+                                    AudioTaskCore) != pdPASS) {
             ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
         }
     }

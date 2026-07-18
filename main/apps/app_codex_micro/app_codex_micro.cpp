@@ -58,11 +58,10 @@ void AppCodexMicro::onRunning()
     if (_serial_debug != nullptr) {
         _serial_debug->poll();
     }
-    const input::KeyEvent event = _key_manager == nullptr || _debug_input_capture
-                                      ? input::KeyEvent::None
-                                      : _key_manager->update(false);
-    const uint32_t now          = GetHAL().millis();
-    const bool refresh_due      = now - _last_ui_update_ms >= UiRefreshPeriodMs;
+    const input::KeyEvent event =
+        _key_manager == nullptr || _debug_input_capture ? input::KeyEvent::None : _key_manager->update(false);
+    const uint32_t now     = GetHAL().millis();
+    const bool refresh_due = now - _last_ui_update_ms >= UiRefreshPeriodMs;
     if (event == input::KeyEvent::None && !refresh_due) {
         return;
     }

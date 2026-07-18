@@ -124,8 +124,8 @@ void Hal::pmic_init()
         update_bat_level_from_mv(battery_mv);
     }
 
-    if (xTaskCreatePinnedToCore(bat_reading_task, "bat_reading", 4 * 1024, nullptr, 1, nullptr,
-                                PeripheralTaskCore) != pdPASS) {
+    if (xTaskCreatePinnedToCore(bat_reading_task, "bat_reading", 4 * 1024, nullptr, 1, nullptr, PeripheralTaskCore) !=
+        pdPASS) {
         mclog::tagError(_tag, "failed to create battery reading task");
     }
 }

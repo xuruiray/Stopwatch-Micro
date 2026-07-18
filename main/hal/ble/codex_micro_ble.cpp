@@ -30,21 +30,20 @@ extern "C" void codex_micro_hid_gatt_compat_link_anchor();
 
 namespace {
 
-constexpr const char* Tag             = "CodexMicro-BLE";
-constexpr const char* DeviceName      = system_config::ProductName;
-constexpr const char* Manufacturer    = "Work Louder";
-constexpr const char* FirmwareVersion = system_config::FirmwareVersion;
-constexpr uint16_t VendorId           = 0x303A;
-constexpr uint16_t ProductId          = 0x8360;
-constexpr uint16_t ProductVersion     = 0x0101;
-constexpr BaseType_t InputTaskCore    = 0;
+constexpr const char* Tag               = "CodexMicro-BLE";
+constexpr const char* DeviceName        = system_config::ProductName;
+constexpr const char* Manufacturer      = "Work Louder";
+constexpr const char* FirmwareVersion   = system_config::FirmwareVersion;
+constexpr uint16_t VendorId             = 0x303A;
+constexpr uint16_t ProductId            = 0x8360;
+constexpr uint16_t ProductVersion       = 0x0101;
+constexpr BaseType_t InputTaskCore      = 0;
 constexpr UBaseType_t InputTaskPriority = 1;
 
 void updateAtomicMax(std::atomic_uint32_t& destination, uint32_t value)
 {
     uint32_t previous = destination.load(std::memory_order_relaxed);
-    while (previous < value &&
-           !destination.compare_exchange_weak(previous, value, std::memory_order_relaxed)) {
+    while (previous < value && !destination.compare_exchange_weak(previous, value, std::memory_order_relaxed)) {
     }
 }
 
@@ -210,9 +209,8 @@ bool CodexMicroBle::begin()
     }
 
     _input_queue = xQueueCreate(InputQueueDepth, sizeof(InputEvent));
-    if (_input_queue == nullptr ||
-        xTaskCreatePinnedToCore(inputTaskEntry, "codex_input_tx", 4096, this, InputTaskPriority, &_input_task,
-                                InputTaskCore) != pdPASS) {
+    if (_input_queue == nullptr || xTaskCreatePinnedToCore(inputTaskEntry, "codex_input_tx", 4096, this,
+                                                           InputTaskPriority, &_input_task, InputTaskCore) != pdPASS) {
         ESP_LOGW(Tag, "unable to start asynchronous input sender; using synchronous fallback");
         if (_input_queue != nullptr) {
             vQueueDelete(_input_queue);
@@ -480,24 +478,24 @@ CodexMicroState CodexMicroBle::snapshot()
 CodexMicroBleDiagnostics CodexMicroBle::diagnostics() const
 {
     return {
-        .initialized = _initialized.load(),
-        .hidReady = _hid_ready.load(),
-        .connected = _connected.load(std::memory_order_acquire),
-        .advertising = _advertising.load(),
-        .inputQueued = _input_queued.load(),
-        .inputDropped = _input_dropped.load(),
+        .initialized    = _initialized.load(),
+        .hidReady       = _hid_ready.load(),
+        .connected      = _connected.load(std::memory_order_acquire),
+        .advertising    = _advertising.load(),
+        .inputQueued    = _input_queued.load(),
+        .inputDropped   = _input_dropped.load(),
         .inputProcessed = _input_processed.load(),
-        .txMessages = _tx_messages.load(),
-        .txReports = _tx_reports.load(),
-        .txFailures = _tx_failures.load(),
-        .rxReports = _rx_reports.load(),
-        .rpcMessages = _rpc_messages.load(),
-        .rpcErrors = _rpc_errors.load(),
-        .queuePending = _input_queue == nullptr ? 0U : static_cast<uint32_t>(uxQueueMessagesWaiting(_input_queue)),
+        .txMessages     = _tx_messages.load(),
+        .txReports      = _tx_reports.load(),
+        .txFailures     = _tx_failures.load(),
+        .rxReports      = _rx_reports.load(),
+        .rpcMessages    = _rpc_messages.load(),
+        .rpcErrors      = _rpc_errors.load(),
+        .queuePending   = _input_queue == nullptr ? 0U : static_cast<uint32_t>(uxQueueMessagesWaiting(_input_queue)),
         .queueHighWater = _queue_high_water.load(std::memory_order_relaxed),
-        .txMaxUs = _tx_max_us.load(std::memory_order_relaxed),
-        .txTotalUs = _tx_total_us.load(std::memory_order_relaxed),
-        .inputTaskCore = _input_task_core.load(std::memory_order_relaxed),
+        .txMaxUs        = _tx_max_us.load(std::memory_order_relaxed),
+        .txTotalUs      = _tx_total_us.load(std::memory_order_relaxed),
+        .inputTaskCore  = _input_task_core.load(std::memory_order_relaxed),
     };
 }
 
@@ -526,20 +524,20 @@ bool CodexMicroBle::protocolSelfTest() const
     }
 
     std::array<char, 112> key_message = {};
-    const int key_length = std::snprintf(
-        key_message.data(), key_message.size(),
-        "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"%s\",\"act\":%u,\"ag\":%d}}",
-        codexMicroControlCode(CodexMicroControl::Agent1), static_cast<unsigned>(CodexMicroKeyAction::Press), 0);
+    const int key_length = std::snprintf(key_message.data(), key_message.size(),
+                                         "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"%s\",\"act\":%u,\"ag\":%d}}",
+                                         codexMicroControlCode(CodexMicroControl::Agent1),
+                                         static_cast<unsigned>(CodexMicroKeyAction::Press), 0);
     if (key_length <= 0 || static_cast<std::size_t>(key_length) >= key_message.size() ||
-        std::strcmp(key_message.data(),
-                    "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"AG00\",\"act\":1,\"ag\":0}}") != 0) {
+        std::strcmp(key_message.data(), "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"AG00\",\"act\":1,\"ag\":0}}") !=
+            0) {
         return false;
     }
 
     std::array<char, 112> joystick_message = {};
-    const int joystick_length = std::snprintf(
-        joystick_message.data(), joystick_message.size(),
-        "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}", 0.0, 0.0);
+    const int joystick_length =
+        std::snprintf(joystick_message.data(), joystick_message.size(),
+                      "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}", 0.0, 0.0);
     return joystick_length > 0 && static_cast<std::size_t>(joystick_length) < joystick_message.size() &&
            std::strcmp(joystick_message.data(),
                        "{\"method\":\"v.oai.rad\",\"params\":{\"a\":0.000000,\"d\":0.000000}}") == 0;
@@ -628,10 +626,10 @@ bool CodexMicroBle::schedulePairingRestart()
 bool CodexMicroBle::sendKey(CodexMicroControl control, CodexMicroKeyAction action, int8_t agent)
 {
     const InputEvent event = {
-        .kind = InputEventKind::Key,
+        .kind    = InputEventKind::Key,
         .control = control,
-        .action = action,
-        .agent = agent,
+        .action  = action,
+        .agent   = agent,
     };
     return queueInput(event);
 }
@@ -639,8 +637,8 @@ bool CodexMicroBle::sendKey(CodexMicroControl control, CodexMicroKeyAction actio
 bool CodexMicroBle::sendJoystick(float angle, float distance)
 {
     const InputEvent event = {
-        .kind = InputEventKind::Joystick,
-        .angle = angle,
+        .kind     = InputEventKind::Joystick,
+        .angle    = angle,
         .distance = distance,
     };
     return queueInput(event);
@@ -652,11 +650,10 @@ bool CodexMicroBle::sendEncoderSteps(int direction, uint16_t steps)
         return true;
     }
     const InputEvent event = {
-        .kind = InputEventKind::Key,
-        .control = direction > 0 ? CodexMicroControl::EncoderClockwise
-                                 : CodexMicroControl::EncoderCounterClockwise,
-        .action = CodexMicroKeyAction::Rotate,
-        .repeat = steps,
+        .kind    = InputEventKind::Key,
+        .control = direction > 0 ? CodexMicroControl::EncoderClockwise : CodexMicroControl::EncoderCounterClockwise,
+        .action  = CodexMicroKeyAction::Rotate,
+        .repeat  = steps,
     };
     return queueInput(event);
 }
@@ -757,9 +754,9 @@ bool CodexMicroBle::sendKeyNow(CodexMicroControl control, CodexMicroKeyAction ac
 bool CodexMicroBle::sendJoystickNow(float angle, float distance)
 {
     std::array<char, 112> message = {};
-    const int length = std::snprintf(message.data(), message.size(),
-                                     "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}",
-                                     static_cast<double>(angle), static_cast<double>(distance));
+    const int length =
+        std::snprintf(message.data(), message.size(), "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}",
+                      static_cast<double>(angle), static_cast<double>(distance));
     const bool encoded = length > 0 && static_cast<std::size_t>(length) < message.size();
     const bool sent    = encoded && sendJson(message.data());
     ESP_LOGD(Tag, "TX stick angle=%.3f distance=%.3f sent=%d", static_cast<double>(angle),
@@ -798,13 +795,13 @@ bool CodexMicroBle::sendJson(const char* json)
     const std::size_t json_length   = std::strlen(json);
     const std::size_t framed_length = json_length + 1;
     ++_tx_messages;
-    bool success                    = true;
-    std::size_t offset              = 0;
+    bool success       = true;
+    std::size_t offset = 0;
     while (offset < framed_length) {
-        const std::size_t chunk    = std::min(PayloadSize, framed_length - offset);
-        uint8_t report[ReportSize] = {};
-        report[0]                  = 2;
-        report[1]                  = static_cast<uint8_t>(chunk);
+        const std::size_t chunk      = std::min(PayloadSize, framed_length - offset);
+        uint8_t report[ReportSize]   = {};
+        report[0]                    = 2;
+        report[1]                    = static_cast<uint8_t>(chunk);
         const std::size_t json_chunk = std::min(chunk, json_length - std::min(offset, json_length));
         if (json_chunk > 0) {
             std::memcpy(report + 2, json + offset, json_chunk);

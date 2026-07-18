@@ -1,0 +1,71 @@
+name: Firmware build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - CMakeLists.txt
+      - dependencies.lock
+      - fetch_repos.py
+      - main/**
+      - partitions.csv
+      - patches/**
+      - repos.json
+      - sdkconfig.defaults
+      - tools/package_release.py
+      - .github/workflows/firmware-build.yml
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - dependencies.lock
+      - fetch_repos.py
+      - main/**
+      - partitions.csv
+      - patches/**
+      - repos.json
+      - sdkconfig.defaults
+      - tools/package_release.py
+      - .github/workflows/firmware-build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Fetch pinned source dependencies
+        run: python3 fetch_repos.py
+
+      - name: Build with ESP-IDF 5.5.4
+        uses: espressif/esp-idf-ci-action@e6f5c74232b1ccd4c97ed641f1e48553853f1fd5 # v1.2.0
+        with:
+          esp_idf_version: v5.5.4
+          target: esp32s3
+          path: .
+
+      - name: Package flashing bundle
+        run: >-
+          python3 tools/package_release.py
+          --version 0.1.0
+          --commit "${GITHUB_SHA}"
+          --build-dir build
+          --output-dir dist
+
+      - name: Upload flashing bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Stopwatch-Micro-v0.1.0-${{ github.sha }}
+          path: dist/**
+          if-no-files-found: error
+          retention-days: 30
