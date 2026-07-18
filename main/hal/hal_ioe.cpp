@@ -20,6 +20,7 @@ namespace {
 constexpr uint8_t _ioe_addr_primary   = 0x4F;
 constexpr uint8_t _ioe_addr_secondary = 0x6F;
 constexpr int L3bEnableMaxAttempts    = 10;
+constexpr BaseType_t PeripheralTaskCore = 0;
 
 }  // namespace
 
@@ -139,8 +140,8 @@ static class Vibrator {
 public:
     bool init()
     {
-        if (xTaskCreate([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024, this, 5,
-                        &_task_handle) != pdPASS) {
+        if (xTaskCreatePinnedToCore([](void* obj) { static_cast<Vibrator*>(obj)->task(); }, "vibrator", 4 * 1024,
+                                    this, 5, &_task_handle, PeripheralTaskCore) != pdPASS) {
             mclog::tagError(_tag, "failed to create vibrator task");
             return false;
         }
@@ -169,6 +170,11 @@ public:
         if (_task_handle) {
             xTaskNotifyGive(_task_handle);
         }
+    }
+
+    bool ready() const
+    {
+        return _task_handle != nullptr;
     }
 
 private:
@@ -250,4 +256,14 @@ void Hal::vibrate(uint16_t durationMs, uint8_t strength)
 void Hal::stopVibrate()
 {
     _vibrator.stop();
+}
+
+bool Hal::ioe_ready() const
+{
+    return _ioe != nullptr;
+}
+
+bool Hal::vibrator_ready() const
+{
+    return _ioe != nullptr && _vibrator.ready();
 }

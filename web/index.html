@@ -79,6 +79,18 @@
       background: linear-gradient(90deg, transparent 49.85%, rgba(255,255,255,.025) 50%, transparent 50.15%);
       pointer-events: none;
     }
+    .ambient-ring {
+      position: absolute;
+      inset: 1px;
+      z-index: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(farthest-side,
+        transparent calc(100% - 29px),
+        rgba(116,126,215,.018) calc(100% - 28px),
+        rgba(116,126,215,.42) 100%);
+    }
+    .device.is-pairing .ambient-ring { opacity: 0; }
 
     .page {
       position: absolute;
@@ -432,6 +444,13 @@
       transform-origin: center;
     }
     .mic-screen.show .mic-meter span { opacity: .72; }
+    .mic-source {
+      margin-top: -30px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+    }
 
     .pairing-screen {
       position: absolute;
@@ -496,7 +515,6 @@
     }
     @keyframes pairing-core { 50% { opacity: .58; transform: scale(.78); } }
     @keyframes pairing-dot { 0%, 70%, 100% { opacity: .28; } 35% { opacity: 1; } }
-
     .hardware-key {
       position: absolute;
       top: 103px;
@@ -552,6 +570,7 @@
   <main class="review-layout">
     <section class="device-stage" aria-label="466 by 466 circular display preview">
       <div class="device" id="device">
+        <div class="ambient-ring" aria-hidden="true"></div>
         <section class="page active" data-page="0" aria-label="Command controls">
           <div class="command-deck">
             <button class="action command command-fast" type="button" data-action="ACT06" aria-label="Fast mode — ACT06">
@@ -575,7 +594,7 @@
               <path class="arc-track-shadow" d="M 95.6 387.6 A 208 208 0 1 1 370.4 387.6" />
               <path class="arc-track" d="M 95.6 387.6 A 208 208 0 1 1 370.4 387.6" />
               <g class="arc-thumb" id="arcThumb">
-                <circle class="arc-thumb-hit" r="27" />
+                <circle class="arc-thumb-hit" r="56" />
                 <rect class="arc-thumb-block" x="-23" y="-15" width="46" height="30" rx="9" />
                 <path class="arc-thumb-grip" d="M -8 -7 V 7 M 0 -7 V 7 M 8 -7 V 7" />
               </g>
@@ -605,6 +624,7 @@
             <div class="mic-meter" id="micMeter" role="meter" aria-label="Voice volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
               <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
+            <div class="mic-source">HOST PTT / LOCAL LEVEL</div>
           </div>
         </section>
 
@@ -803,6 +823,9 @@
       let stickPointer = null;
       let lastAngle = 0;
       let stickDistance = 0;
+      let hostStickDistance = 0;
+      const STICK_HOST_DEAD_ZONE = .06;
+      const STICK_HOST_FULL_SCALE = .38;
 
       function directionFor(angle) {
         if (angle >= .875 || angle < .125) return 'FORWARD';
@@ -818,6 +841,8 @@
         const maxTravel = 73;
         const rawDistance = Math.hypot(dx, dy);
         stickDistance = Math.min(1, rawDistance / maxTravel);
+        hostStickDistance = Math.max(0, Math.min(1,
+          (stickDistance - STICK_HOST_DEAD_ZONE) / (STICK_HOST_FULL_SCALE - STICK_HOST_DEAD_ZONE)));
         const angle = rawDistance < .5 ? lastAngle : ((Math.atan2(dy, dx) / (Math.PI * 2)) + 1) % 1;
         if (rawDistance >= .5) lastAngle = angle;
         const scale = rawDistance > maxTravel ? maxTravel / rawDistance : 1;
@@ -825,9 +850,11 @@
         const y = dy * scale;
         joystickKnob.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
         const direction = directionFor(angle);
-        joystick.setAttribute('aria-valuenow', stickDistance.toFixed(2));
-        joystick.setAttribute('aria-valuetext', `${direction} ${stickDistance.toFixed(2)}`);
-        setEvent(stickDistance >= .35 ? `${direction} · ${stickDistance.toFixed(2)}` : `STICK · ${stickDistance.toFixed(2)}`);
+        joystick.setAttribute('aria-valuenow', hostStickDistance.toFixed(2));
+        joystick.setAttribute('aria-valuetext', `${direction} ${hostStickDistance.toFixed(2)}`);
+        setEvent(hostStickDistance >= .35
+          ? `${direction} · ${hostStickDistance.toFixed(2)}`
+          : `STICK · ${hostStickDistance.toFixed(2)}`);
       }
 
       joystick.addEventListener('pointerdown', (event) => {
@@ -843,9 +870,10 @@
       const releaseJoystick = (event) => {
         if (stickPointer === null || (event.pointerId !== undefined && event.pointerId !== stickPointer)) return;
         const direction = directionFor(lastAngle);
-        const triggered = stickDistance >= .35;
+        const triggered = hostStickDistance >= .35;
         stickPointer = null;
         stickDistance = 0;
+        hostStickDistance = 0;
         joystick.classList.remove('dragging');
         joystickKnob.style.transform = 'translate(-50%, -50%)';
         joystick.setAttribute('aria-valuenow', '0.00');
@@ -860,7 +888,7 @@
       const ARC_RADIUS = 208;
       const ARC_START_DEGREES = 132;
       const ARC_END_DEGREES = 408;
-      const ARC_STEP_COUNT = 36;
+      const ARC_STEP_COUNT = 60;
       const ARC_CENTER_STEP = ARC_STEP_COUNT / 2;
       const ARC_RETURN_MS = 240;
       let dialMode = params.get('dial') === 'reasoning' ? 'reasoning' : 'composer';

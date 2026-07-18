@@ -37,6 +37,7 @@ constexpr uint32_t _bat_reading_period_ms = 1000;
 constexpr uint16_t _bat_filter_weight_old = 7;
 constexpr uint16_t _bat_filter_weight_new = 1;
 constexpr uint16_t _bat_filter_weight_sum = _bat_filter_weight_old + _bat_filter_weight_new;
+constexpr BaseType_t PeripheralTaskCore   = 0;
 
 uint8_t _bat_level        = 0;
 uint16_t _bat_filtered_mv = 0;
@@ -123,7 +124,8 @@ void Hal::pmic_init()
         update_bat_level_from_mv(battery_mv);
     }
 
-    if (xTaskCreate(bat_reading_task, "bat_reading", 4 * 1024, nullptr, 1, nullptr) != pdPASS) {
+    if (xTaskCreatePinnedToCore(bat_reading_task, "bat_reading", 4 * 1024, nullptr, 1, nullptr,
+                                PeripheralTaskCore) != pdPASS) {
         mclog::tagError(_tag, "failed to create battery reading task");
     }
 }
@@ -165,4 +167,9 @@ bool Hal::isBatteryCharging(bool strict)
         return external_power_inserted && charging_active;
     }
     return external_power_inserted;
+}
+
+bool Hal::pmic_ready() const
+{
+    return _pm1 != nullptr;
 }

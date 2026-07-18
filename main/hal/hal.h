@@ -59,7 +59,29 @@ private:
 /** Board services required by the Stopwatch Micro system firmware. */
 class Hal {
 public:
+    struct Diagnostics {
+        bool i2c       = false;
+        bool pmic      = false;
+        bool ioExpander = false;
+        bool display   = false;
+        bool touch     = false;
+        bool audio     = false;
+        bool vibrator  = false;
+        bool buttons   = false;
+    };
+
+    struct PerformanceDiagnostics {
+        uint32_t lvglHandlerCalls = 0;
+        uint32_t lvglHandlerMaxUs = 0;
+        uint32_t touchReads       = 0;
+        uint32_t touchMaxGapUs    = 0;
+        int8_t lvglTaskCore       = -1;
+    };
+
     void init();
+    Diagnostics diagnostics() const;
+    PerformanceDiagnostics performanceDiagnostics() const;
+    void resetPerformanceDiagnostics();
 
     /* --------------------------------- System --------------------------------- */
     void delay(std::uint32_t ms);
@@ -99,6 +121,9 @@ public:
     int getSpeakerVolume(bool loadFromSettings = false);
     int getAudioSampleRate();
     void audioPlay(std::vector<int16_t>& data, bool async = true);
+    void setMicrophoneMeterEnabled(bool enabled);
+    bool isMicrophoneMeterEnabled();
+    float getMicrophoneLevel();
 
     /* ----------------------------- Vibrator Motor ----------------------------- */
     void vibrate(uint16_t durationMs, uint8_t strength = 100);
@@ -125,6 +150,7 @@ private:
     ButtonConfig _btn_config;
     int _bl_brightness = 80;
     int _spk_volume    = 80;
+    bool _buttons_ready = false;
 
     void i2c_init();
     void i2c_detect();
@@ -138,6 +164,12 @@ private:
     void lvgl_init();
     void audio_init();
     void button_init();
+    bool pmic_ready() const;
+    bool ioe_ready() const;
+    bool display_ready() const;
+    bool touch_ready() const;
+    bool audio_ready() const;
+    bool vibrator_ready() const;
 };
 
 Hal& GetHAL();

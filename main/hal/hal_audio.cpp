@@ -7,6 +7,10 @@
 #include "utils/settings/settings.h"
 
 #include <algorithm>
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <cstdint>
 #include <driver/i2s_std.h>
 #include <esp_codec_dev.h>
 #include <esp_codec_dev_defaults.h>
@@ -24,7 +28,9 @@ constexpr i2s_port_t I2sPort   = I2S_NUM_0;
 constexpr gpio_num_t I2sMclk   = GPIO_NUM_18;
 constexpr gpio_num_t I2sBclk   = GPIO_NUM_17;
 constexpr gpio_num_t I2sLrck   = GPIO_NUM_15;
+constexpr gpio_num_t I2sDin    = GPIO_NUM_16;
 constexpr gpio_num_t I2sDout   = GPIO_NUM_21;
+constexpr BaseType_t AudioTaskCore = 0;
 
 class AudioCodec {
 public:
@@ -36,7 +42,7 @@ public:
         initI2s();
 
         audio_codec_i2s_cfg_t i2s_config = {};
-        i2s_config.rx_handle             = nullptr;
+        i2s_config.rx_handle             = _rx_handle;
         i2s_config.tx_handle             = _tx_handle;
         _data_interface                  = audio_codec_new_i2s_data(&i2s_config);
 
@@ -49,13 +55,13 @@ public:
         es8311_codec_cfg_t codec_config = {};
         codec_config.ctrl_if            = _control_interface;
         codec_config.gpio_if            = _gpio_interface;
-        codec_config.codec_mode         = ESP_CODEC_DEV_WORK_MODE_DAC;
+        codec_config.codec_mode         = ESP_CODEC_DEV_WORK_MODE_BOTH;
         codec_config.pa_pin             = GPIO_NUM_NC;
         codec_config.use_mclk           = true;
         _codec_interface                = es8311_codec_new(&codec_config);
 
         esp_codec_dev_cfg_t device_config = {
-            .dev_type = ESP_CODEC_DEV_TYPE_OUT,
+            .dev_type = ESP_CODEC_DEV_TYPE_IN_OUT,
             .codec_if = _codec_interface,
             .data_if  = _data_interface,
         };
@@ -66,8 +72,14 @@ public:
         sample_info.channel                     = 1;
         sample_info.sample_rate                 = SampleRate;
         ESP_ERROR_CHECK(esp_codec_dev_open(_device, &sample_info));
+        ESP_ERROR_CHECK(esp_codec_dev_set_in_gain(_device, MicrophoneGainDb));
 
-        if (xTaskCreate(taskEntry, "audio_task", 4 * 1024, this, 5, &_task_handle) != pdPASS) {
+        if (xTaskCreatePinnedToCore(taskEntry, "audio_task", 4 * 1024, this, 5, &_task_handle, AudioTaskCore) !=
+            pdPASS) {
+            ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+        }
+        if (xTaskCreatePinnedToCore(microphoneTaskEntry, "mic_meter_task", 4 * 1024, this, 4,
+                                    &_microphone_task_handle, AudioTaskCore) != pdPASS) {
             ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
         }
     }
@@ -103,10 +115,52 @@ public:
         xTaskNotifyGive(_task_handle);
     }
 
+    void setMicrophoneMeterEnabled(bool enabled)
+    {
+        if (_microphone_meter_enabled.exchange(enabled) == enabled) {
+            return;
+        }
+
+        _microphone_level.store(0);
+        if (enabled) {
+            _microphone_peak.store(0);
+            mclog::tagInfo(Tag, "microphone meter enabled");
+            xTaskNotifyGive(_microphone_task_handle);
+        } else {
+            mclog::tagInfo(Tag, "microphone meter disabled, peak={}%%", _microphone_peak.load() / 10);
+        }
+    }
+
+    float getMicrophoneLevel() const
+    {
+        return static_cast<float>(_microphone_level.load()) / 1000.0f;
+    }
+
+    bool ready() const
+    {
+        return _device != nullptr && _rx_handle != nullptr && _tx_handle != nullptr && _task_handle != nullptr &&
+               _microphone_task_handle != nullptr;
+    }
+
+    bool microphoneMeterEnabled() const
+    {
+        return _microphone_meter_enabled.load();
+    }
+
 private:
+    static constexpr float MicrophoneGainDb              = 30.0f;
+    static constexpr float MicrophoneNoiseFloorDb        = -56.0f;
+    static constexpr float MicrophoneLoudDb              = -18.0f;
+    static constexpr std::size_t MicrophoneWindowSamples = 512;
+
     static void taskEntry(void* context)
     {
         static_cast<AudioCodec*>(context)->run();
+    }
+
+    static void microphoneTaskEntry(void* context)
+    {
+        static_cast<AudioCodec*>(context)->runMicrophoneMeter();
     }
 
     void run()
@@ -154,6 +208,53 @@ private:
         }
     }
 
+    void runMicrophoneMeter()
+    {
+        std::array<int16_t, MicrophoneWindowSamples> samples = {};
+
+        while (true) {
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+            while (_microphone_meter_enabled.load()) {
+                const int result = esp_codec_dev_read(_device, samples.data(), samples.size() * sizeof(int16_t));
+                if (result != ESP_CODEC_DEV_OK) {
+                    mclog::tagWarn(Tag, "microphone read failed: {}", result);
+                    _microphone_level.store(0);
+                    vTaskDelay(pdMS_TO_TICKS(20));
+                    continue;
+                }
+                if (!_microphone_meter_enabled.load()) {
+                    break;
+                }
+
+                int64_t sum = 0;
+                for (const int16_t sample : samples) {
+                    sum += sample;
+                }
+                const double mean  = static_cast<double>(sum) / static_cast<double>(samples.size());
+                double squared_sum = 0.0;
+                for (const int16_t sample : samples) {
+                    const double centered = static_cast<double>(sample) - mean;
+                    squared_sum += centered * centered;
+                }
+
+                const double rms      = std::sqrt(squared_sum / static_cast<double>(samples.size()));
+                const float amplitude = static_cast<float>(rms / 32768.0);
+                const float dbfs      = 20.0f * std::log10(std::max(amplitude, 0.000001f));
+                const float level     = std::clamp(
+                    (dbfs - MicrophoneNoiseFloorDb) / (MicrophoneLoudDb - MicrophoneNoiseFloorDb), 0.0f, 1.0f);
+                const uint16_t scaled_level = static_cast<uint16_t>(std::lround(level * 1000.0f));
+                _microphone_level.store(scaled_level);
+
+                uint16_t peak = _microphone_peak.load();
+                while (scaled_level > peak && !_microphone_peak.compare_exchange_weak(peak, scaled_level)) {
+                }
+            }
+
+            _microphone_level.store(0);
+        }
+    }
+
     void write(const std::vector<int16_t>& data)
     {
         ESP_ERROR_CHECK(esp_codec_dev_write(_device, const_cast<int16_t*>(data.data()), data.size() * sizeof(int16_t)));
@@ -176,24 +277,31 @@ private:
         standard_config.gpio_cfg.bclk = I2sBclk;
         standard_config.gpio_cfg.ws   = I2sLrck;
         standard_config.gpio_cfg.dout = I2sDout;
-        standard_config.gpio_cfg.din  = GPIO_NUM_NC;
+        standard_config.gpio_cfg.din  = I2sDin;
 
-        ESP_ERROR_CHECK(i2s_new_channel(&channel_config, &_tx_handle, nullptr));
+        ESP_ERROR_CHECK(i2s_new_channel(&channel_config, &_tx_handle, &_rx_handle));
         ESP_ERROR_CHECK(i2s_channel_init_std_mode(_tx_handle, &standard_config));
+        ESP_ERROR_CHECK(i2s_channel_init_std_mode(_rx_handle, &standard_config));
         ESP_ERROR_CHECK(i2s_channel_enable(_tx_handle));
+        ESP_ERROR_CHECK(i2s_channel_enable(_rx_handle));
     }
 
     i2s_chan_handle_t _tx_handle                    = nullptr;
+    i2s_chan_handle_t _rx_handle                    = nullptr;
     esp_codec_dev_handle_t _device                  = nullptr;
     const audio_codec_data_if_t* _data_interface    = nullptr;
     const audio_codec_ctrl_if_t* _control_interface = nullptr;
     const audio_codec_gpio_if_t* _gpio_interface    = nullptr;
     const audio_codec_if_t* _codec_interface        = nullptr;
     TaskHandle_t _task_handle                       = nullptr;
+    TaskHandle_t _microphone_task_handle            = nullptr;
     std::mutex _mutex;
     std::vector<int16_t> _audio_data;
     std::vector<int16_t> _silence_buffer;
-    bool _is_playing = false;
+    std::atomic<bool> _microphone_meter_enabled = false;
+    std::atomic<uint16_t> _microphone_level     = 0;
+    std::atomic<uint16_t> _microphone_peak      = 0;
+    bool _is_playing                            = false;
 };
 
 AudioCodec Audio;
@@ -236,7 +344,27 @@ void Hal::audioPlay(std::vector<int16_t>& data, bool async)
     Audio.play(data, async);
 }
 
+void Hal::setMicrophoneMeterEnabled(bool enabled)
+{
+    Audio.setMicrophoneMeterEnabled(enabled);
+}
+
+bool Hal::isMicrophoneMeterEnabled()
+{
+    return Audio.microphoneMeterEnabled();
+}
+
+float Hal::getMicrophoneLevel()
+{
+    return Audio.getMicrophoneLevel();
+}
+
 int Hal::getAudioSampleRate()
 {
     return AudioCodec::SampleRate;
+}
+
+bool Hal::audio_ready() const
+{
+    return Audio.ready();
 }

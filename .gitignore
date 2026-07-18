@@ -55,6 +55,8 @@ __pycache__/
 # Debug / Release files
 Debug/
 debug/
+!main/debug/
+!main/debug/**
 Release/
 release/
 out/

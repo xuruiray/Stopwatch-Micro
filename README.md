@@ -25,16 +25,17 @@ returns immediately to Pairing.
 | Command left | `ACT07` | Approve |
 | Command right | `ACT08` | Decline |
 | Command bottom | `ACT09` | Fork |
-| Yellow physical A | `ACT10` | Hold for Mic; release to stop |
+| Yellow physical A | `ACT10` | Hold for host push-to-talk; release to stop |
 | Blue physical B | `ACT12` | Send |
 | Physical A + B | local UI | Toggle Command and Agent |
 | Agent 1–6 | `AG00`–`AG05` | Select the corresponding agent/thread |
-| Arc slider | `ENC_CC`, `ENC`, `ENC_CW` | Previous, press/select, next; returns to center |
-| Planar joystick | `v.oai.rad` | Plan, Forward, Sidebar, Back |
+| Arc slider | `ENC_CC`, `ENC`, `ENC_CW` | Enlarged touch target; previous, press/select, next; returns to center |
+| Planar joystick | `v.oai.rad` | Dead-zone-compensated Plan, Forward, Sidebar, Back |
 | Bottom touch sensor | local system | Hold for 3 seconds to erase BLE bonds and restart pairing |
 
-The Mic screen meter is a local animated activity visualization. The compatibility transport does
-not provide microphone amplitude samples to the display.
+The Mic screen meter is driven by the StopWatch's built-in MEMS microphone. It visualizes the local
+sound level only: `ACT10` starts push-to-talk with the computer's selected microphone, and the BLE
+vendor HID transport does not stream StopWatch PCM audio to the host.
 
 ## Web review prototype
 
@@ -60,6 +61,7 @@ enable Pages with GitHub Actions as the source, and run **Deploy web prototype**
 main/
 ├── main.cpp                         # hardware services and system-app bootstrap
 ├── system_config.h                  # BLE product identity and firmware version
+├── debug/                           # USB Serial/JTAG diagnostic CLI
 ├── apps/
 │   ├── app_codex_micro/             # the only application and LVGL UI
 │   └── common/                      # shared key/audio helpers
@@ -86,6 +88,45 @@ idf.py -p /dev/cu.usbmodem21301 flash monitor
 
 Discover the connected `/dev/cu.usb*` device first when the example port is not present. Generated
 dependency and build directories are ignored by Git.
+
+## Serial diagnostics
+
+The firmware exposes a non-blocking, line-oriented debug CLI over the primary USB Serial/JTAG
+port. Commands always start with `debug` (or `dbg`) and finish with a machine-readable result such
+as `DBG RESULT command=selftest status=PASS passed=16 failed=0`.
+
+```text
+debug help
+debug status
+debug selftest
+debug controls
+debug protocol
+debug ui cycle
+debug transport
+debug perf 3000
+debug trace 30000
+debug mic 2500
+debug inputs 20000
+debug tone 880 350
+debug vibrate 500 80
+debug backlight 80
+```
+
+Run the safe automated suite from the host with:
+
+```bash
+source "$HOME/esp/esp-idf/export.sh"
+python3 -u tools/serial_debug_test.py --port /dev/cu.usbmodem21301
+```
+
+Add `--interactive` to include audible, haptic, physical-key, touch, and visual confirmation. Opening
+the ESP32-S3 USB Serial/JTAG port may reset the board; the runner waits for a fresh `DBG READY` and
+`ping` handshake before testing. `debug pairing-reset CONFIRM` is deliberately excluded because it
+erases BLE bonds and restarts the device.
+
+`debug perf` generates a safe 50 Hz neutral-joystick load and reports BLE queue depth, HID latency,
+LVGL handler time, and touch-sampling gaps. For a real interaction trace, operate the physical
+controls while running `python3 -u tools/serial_debug_test.py --trace-seconds 30`.
 
 ## Validation
 

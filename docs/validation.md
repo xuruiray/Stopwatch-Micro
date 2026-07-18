@@ -33,6 +33,39 @@ idf.py build
 
 The build must complete without compile/link errors and fit in the configured application partition.
 
+## USB serial diagnostics
+
+Flash the firmware, keep ChatGPT connected for the transport/UI checks, and run:
+
+```bash
+source "$HOME/esp/esp-idf/export.sh"
+python3 -u tools/serial_debug_test.py --port /dev/cu.usbmodem21301
+```
+
+The automated runner verifies the USB receive/transmit handshake, eight HAL readiness signals,
+heap integrity and PSRAM, display geometry, battery telemetry, audio configuration, BLE service,
+all 12 physical Codex control codes, the three encoder codes, report framing, an actual neutral HID
+transmission, Command/Agent/Mic UI construction, and live microphone samples. A zero exit code means
+no command returned `FAIL`; `OBSERVE` and `SKIP` are reported separately and must not be promoted to
+`PASS` without the missing evidence.
+
+Use `--interactive` for tests requiring a human observer. During `debug inputs`, normal UI/host
+actions are suppressed so A, B, and touch can be exercised without sending Approve, Decline, or
+other Codex actions. Audio, vibration, and display commands prove that the firmware requested the
+actuation; audible, physical, and visual effects still require observation. The bond-erasing
+`debug pairing-reset CONFIRM` command is destructive and is not part of the default suite.
+
+The default suite also runs a 3-second 50 Hz neutral-HID performance test. A valid run must keep
+`dropped=0`, `failures=0`, `queue_high` bounded, `touch_gap_max_us` below 50000, and report
+`lvgl_core=1` with `tx_core=0`. Capture real physical interaction separately with:
+
+```bash
+python3 -u tools/serial_debug_test.py --port /dev/cu.usbmodem21301 --trace-seconds 30
+```
+
+The trace is expected to fail when no physical control is operated; that is an absence of test
+input, not evidence that the input path passed.
+
 ## Device and host
 
 After flashing, capture serial evidence for a clean boot with no panic or LVGL stack warning, then
@@ -42,13 +75,16 @@ verify the following against ChatGPT Settings:
    disconnect.
 2. `AG00`–`AG05`, `ACT06`–`ACT10`, and `ACT12` each trigger their mapped host action.
 3. Agent labels and lights follow host thread updates.
-4. The arc slider produces `ENC_CC`, `ENC`, and `ENC_CW`; the planar joystick produces
-   `v.oai.rad` direction updates.
-5. Holding physical A starts Mic, releasing A stops it, physical B sends, and A+B only toggles pages.
+4. The enlarged arc-slider target produces `ENC_CC`, `ENC`, and `ENC_CW` without stalling during a
+   fast drag; the planar joystick crosses the host action threshold before reaching the visual edge
+   and produces `v.oai.rad` direction updates.
+5. Holding physical A starts host push-to-talk, the meter reacts to sound captured by the built-in
+   MEMS microphone, releasing A stops push-to-talk, physical B sends, and A+B only toggles pages.
 6. Every accepted input produces audible and haptic feedback without making touch or page changes
    sluggish.
 7. Holding the bottom touch sensor for 3 seconds erases stored bonds, restarts, and advertises for a
    fresh pairing.
 
-The Mic meter is intentionally not an amplitude test: the current compatibility transport does not
-carry live microphone-level samples to the display.
+The Mic meter reads the StopWatch's local MEMS microphone. It does not prove that host audio is being
+captured or transported: the compatibility protocol only triggers host push-to-talk, ChatGPT uses the
+computer's selected microphone, and the BLE vendor HID channel does not stream StopWatch PCM audio.

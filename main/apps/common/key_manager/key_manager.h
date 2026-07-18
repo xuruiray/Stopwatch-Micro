@@ -49,7 +49,9 @@ private:
         Send,
     };
 
-    static constexpr uint32_t ChordWindowMs = 50;
+    // A/B still get a short opportunity to form the page-switch chord, but a
+    // single physical key no longer pays a visibly long 50 ms delay.
+    static constexpr uint32_t ChordWindowMs = 30;
 
     KeyEvent _event         = KeyEvent::None;
     PendingKey _pending_key = PendingKey::None;

@@ -7,6 +7,8 @@
 #include "codex_micro_ble.h"
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -20,6 +22,7 @@
 #include <esp_hidd_gatts.h>
 #include <esp_log.h>
 #include <esp_system.h>
+#include <esp_timer.h>
 #include <freertos/task.h>
 #include <system_config.h>
 
@@ -34,6 +37,16 @@ constexpr const char* FirmwareVersion = system_config::FirmwareVersion;
 constexpr uint16_t VendorId           = 0x303A;
 constexpr uint16_t ProductId          = 0x8360;
 constexpr uint16_t ProductVersion     = 0x0101;
+constexpr BaseType_t InputTaskCore    = 0;
+constexpr UBaseType_t InputTaskPriority = 1;
+
+void updateAtomicMax(std::atomic_uint32_t& destination, uint32_t value)
+{
+    uint32_t previous = destination.load(std::memory_order_relaxed);
+    while (previous < value &&
+           !destination.compare_exchange_weak(previous, value, std::memory_order_relaxed)) {
+    }
+}
 
 const uint8_t ReportMap[] = {
     0x06, 0x00, 0xFF,  // Usage Page (Vendor Defined 0xFF00)
@@ -194,6 +207,18 @@ bool CodexMicroBle::begin()
     if (logStepError("esp_hidd_dev_init",
                      esp_hidd_dev_init(&HidConfig, ESP_HID_TRANSPORT_BLE, hidEventCallback, &_hid_device))) {
         return false;
+    }
+
+    _input_queue = xQueueCreate(InputQueueDepth, sizeof(InputEvent));
+    if (_input_queue == nullptr ||
+        xTaskCreatePinnedToCore(inputTaskEntry, "codex_input_tx", 4096, this, InputTaskPriority, &_input_task,
+                                InputTaskCore) != pdPASS) {
+        ESP_LOGW(Tag, "unable to start asynchronous input sender; using synchronous fallback");
+        if (_input_queue != nullptr) {
+            vQueueDelete(_input_queue);
+            _input_queue = nullptr;
+        }
+        _input_task = nullptr;
     }
 
     ESP_LOGI(Tag, "initializing vendor HID VID=%04X PID=%04X usage=FF00 report=%u", VendorId, ProductId, ReportId);
@@ -408,6 +433,11 @@ void CodexMicroBle::onConnected(bool connectedValue)
     if (_state_mutex == nullptr) {
         return;
     }
+    if (!connectedValue) {
+        // Stop accepting UI input before clearing transport state. The hot
+        // input path reads this atomic and never waits on the RPC state mutex.
+        _connected.store(false, std::memory_order_release);
+    }
     xSemaphoreTake(_state_mutex, portMAX_DELAY);
     _state.connected = connectedValue;
     if (!connectedValue) {
@@ -421,18 +451,18 @@ void CodexMicroBle::onConnected(bool connectedValue)
     }
     ++_state.revision;
     xSemaphoreGive(_state_mutex);
+    if (connectedValue) {
+        _connected.store(true, std::memory_order_release);
+    }
+    if (!connectedValue && _input_queue != nullptr) {
+        xQueueReset(_input_queue);
+    }
     _rpc_buffer.clear();
 }
 
 bool CodexMicroBle::connected()
 {
-    if (_state_mutex == nullptr) {
-        return false;
-    }
-    xSemaphoreTake(_state_mutex, portMAX_DELAY);
-    bool value = _state.connected;
-    xSemaphoreGive(_state_mutex);
-    return value;
+    return _connected.load(std::memory_order_acquire);
 }
 
 CodexMicroState CodexMicroBle::snapshot()
@@ -445,6 +475,74 @@ CodexMicroState CodexMicroBle::snapshot()
     copy = _state;
     xSemaphoreGive(_state_mutex);
     return copy;
+}
+
+CodexMicroBleDiagnostics CodexMicroBle::diagnostics() const
+{
+    return {
+        .initialized = _initialized.load(),
+        .hidReady = _hid_ready.load(),
+        .connected = _connected.load(std::memory_order_acquire),
+        .advertising = _advertising.load(),
+        .inputQueued = _input_queued.load(),
+        .inputDropped = _input_dropped.load(),
+        .inputProcessed = _input_processed.load(),
+        .txMessages = _tx_messages.load(),
+        .txReports = _tx_reports.load(),
+        .txFailures = _tx_failures.load(),
+        .rxReports = _rx_reports.load(),
+        .rpcMessages = _rpc_messages.load(),
+        .rpcErrors = _rpc_errors.load(),
+        .queuePending = _input_queue == nullptr ? 0U : static_cast<uint32_t>(uxQueueMessagesWaiting(_input_queue)),
+        .queueHighWater = _queue_high_water.load(std::memory_order_relaxed),
+        .txMaxUs = _tx_max_us.load(std::memory_order_relaxed),
+        .txTotalUs = _tx_total_us.load(std::memory_order_relaxed),
+        .inputTaskCore = _input_task_core.load(std::memory_order_relaxed),
+    };
+}
+
+void CodexMicroBle::resetPerformanceDiagnostics()
+{
+    _queue_high_water.store(0, std::memory_order_relaxed);
+    _tx_max_us.store(0, std::memory_order_relaxed);
+    _tx_total_us.store(0, std::memory_order_relaxed);
+}
+
+bool CodexMicroBle::protocolSelfTest() const
+{
+    constexpr std::array<std::string_view, 15> ExpectedCodes = {
+        "AG00",  "AG01",  "AG02",  "AG03",  "AG04", "AG05",   "ACT06",  "ACT07",
+        "ACT08", "ACT09", "ACT10", "ACT12", "ENC",  "ENC_CW", "ENC_CC",
+    };
+    for (std::size_t index = 0; index < ExpectedCodes.size(); ++index) {
+        if (ExpectedCodes[index] != CodexMicroControlCodes[index]) {
+            return false;
+        }
+    }
+
+    if (sizeof(ReportMap) < 2 || ReportMap[8] != ReportId || ReportSize != 63 || PayloadSize != 61 ||
+        MaxRpcBufferSize < ReportSize) {
+        return false;
+    }
+
+    std::array<char, 112> key_message = {};
+    const int key_length = std::snprintf(
+        key_message.data(), key_message.size(),
+        "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"%s\",\"act\":%u,\"ag\":%d}}",
+        codexMicroControlCode(CodexMicroControl::Agent1), static_cast<unsigned>(CodexMicroKeyAction::Press), 0);
+    if (key_length <= 0 || static_cast<std::size_t>(key_length) >= key_message.size() ||
+        std::strcmp(key_message.data(),
+                    "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"AG00\",\"act\":1,\"ag\":0}}") != 0) {
+        return false;
+    }
+
+    std::array<char, 112> joystick_message = {};
+    const int joystick_length = std::snprintf(
+        joystick_message.data(), joystick_message.size(),
+        "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}", 0.0, 0.0);
+    return joystick_length > 0 && static_cast<std::size_t>(joystick_length) < joystick_message.size() &&
+           std::strcmp(joystick_message.data(),
+                       "{\"method\":\"v.oai.rad\",\"params\":{\"a\":0.000000,\"d\":0.000000}}") == 0;
 }
 
 void CodexMicroBle::setBattery(uint8_t percentage, bool charging)
@@ -529,42 +627,142 @@ bool CodexMicroBle::schedulePairingRestart()
 
 bool CodexMicroBle::sendKey(CodexMicroControl control, CodexMicroKeyAction action, int8_t agent)
 {
-    cJSON* message = cJSON_CreateObject();
-    cJSON* params  = cJSON_CreateObject();
-    if (message == nullptr || params == nullptr) {
-        cJSON_Delete(message);
-        cJSON_Delete(params);
-        return false;
-    }
-    cJSON_AddStringToObject(message, "method", "v.oai.hid");
-    const char* key = codexMicroControlCode(control);
-    cJSON_AddStringToObject(params, "k", key);
-    cJSON_AddNumberToObject(params, "act", static_cast<uint8_t>(action));
-    if (agent >= 0) {
-        cJSON_AddNumberToObject(params, "ag", agent);
-    }
-    cJSON_AddItemToObject(message, "params", params);
-    const bool sent = sendJsonObject(message);
-    ESP_LOGI(Tag, "TX key=%s act=%u agent=%d sent=%d", key == nullptr ? "" : key, static_cast<unsigned>(action),
-             static_cast<int>(agent), sent ? 1 : 0);
-    return sent;
+    const InputEvent event = {
+        .kind = InputEventKind::Key,
+        .control = control,
+        .action = action,
+        .agent = agent,
+    };
+    return queueInput(event);
 }
 
 bool CodexMicroBle::sendJoystick(float angle, float distance)
 {
-    cJSON* message = cJSON_CreateObject();
-    cJSON* params  = cJSON_CreateObject();
-    if (message == nullptr || params == nullptr) {
-        cJSON_Delete(message);
-        cJSON_Delete(params);
+    const InputEvent event = {
+        .kind = InputEventKind::Joystick,
+        .angle = angle,
+        .distance = distance,
+    };
+    return queueInput(event);
+}
+
+bool CodexMicroBle::sendEncoderSteps(int direction, uint16_t steps)
+{
+    if (steps == 0) {
+        return true;
+    }
+    const InputEvent event = {
+        .kind = InputEventKind::Key,
+        .control = direction > 0 ? CodexMicroControl::EncoderClockwise
+                                 : CodexMicroControl::EncoderCounterClockwise,
+        .action = CodexMicroKeyAction::Rotate,
+        .repeat = steps,
+    };
+    return queueInput(event);
+}
+
+void CodexMicroBle::inputTaskEntry(void* context)
+{
+    static_cast<CodexMicroBle*>(context)->runInputTask();
+}
+
+void CodexMicroBle::runInputTask()
+{
+    _input_task_core.store(static_cast<int8_t>(xPortGetCoreID()), std::memory_order_relaxed);
+    InputEvent event;
+    while (true) {
+        if (xQueueReceive(_input_queue, &event, portMAX_DELAY) != pdTRUE) {
+            continue;
+        }
+        if (event.kind == InputEventKind::Joystick) {
+            // Analog motion is absolute. If the UI sampled several positions
+            // while BLE was busy, only the newest consecutive sample matters;
+            // sending old positions makes the host feel behind the finger.
+            InputEvent next;
+            while (xQueuePeek(_input_queue, &next, 0) == pdTRUE && next.kind == InputEventKind::Joystick) {
+                xQueueReceive(_input_queue, &event, 0);
+            }
+            sendJoystickNow(event.angle, event.distance);
+            ++_input_processed;
+            vTaskDelay(pdMS_TO_TICKS(4));
+            continue;
+        }
+        for (uint16_t index = 0; index < event.repeat; ++index) {
+            if (!sendKeyNow(event.control, event.action, event.agent)) {
+                break;
+            }
+            ++_input_processed;
+            // Encoder detents are relative and must all be preserved. Pace
+            // them on this background task so a long batch cannot starve UI.
+            vTaskDelay(pdMS_TO_TICKS(4));
+        }
+    }
+}
+
+bool CodexMicroBle::queueInput(const InputEvent& event)
+{
+    if (!connected()) {
         return false;
     }
-    cJSON_AddStringToObject(message, "method", "v.oai.rad");
-    cJSON_AddNumberToObject(params, "a", angle);
-    cJSON_AddNumberToObject(params, "d", distance);
-    cJSON_AddItemToObject(message, "params", params);
-    const bool sent = sendJsonObject(message);
-    ESP_LOGI(Tag, "TX stick angle=%.3f distance=%.3f sent=%d", static_cast<double>(angle),
+    if (_input_queue == nullptr) {
+        if (event.kind == InputEventKind::Joystick) {
+            return sendJoystickNow(event.angle, event.distance);
+        }
+        bool sent = true;
+        for (uint16_t index = 0; index < event.repeat; ++index) {
+            sent = sendKeyNow(event.control, event.action, event.agent) && sent;
+        }
+        return sent;
+    }
+    if (xQueueSend(_input_queue, &event, 0) != pdTRUE) {
+        ++_input_dropped;
+        ESP_LOGW(Tag, "input queue full kind=%u repeat=%u", static_cast<unsigned>(event.kind),
+                 static_cast<unsigned>(event.repeat));
+        return false;
+    }
+    ++_input_queued;
+    updateAtomicMax(_queue_high_water, static_cast<uint32_t>(uxQueueMessagesWaiting(_input_queue)));
+    return true;
+}
+
+bool CodexMicroBle::sendKeyNow(CodexMicroControl control, CodexMicroKeyAction action, int8_t agent)
+{
+    const char* key = codexMicroControlCode(control);
+    if (key == nullptr) {
+        return false;
+    }
+    std::array<char, 112> message = {};
+    int length                    = 0;
+    if (agent >= 0) {
+        length = std::snprintf(message.data(), message.size(),
+                               "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"%s\",\"act\":%u,\"ag\":%d}}", key,
+                               static_cast<unsigned>(action), static_cast<int>(agent));
+    } else {
+        length = std::snprintf(message.data(), message.size(),
+                               "{\"method\":\"v.oai.hid\",\"params\":{\"k\":\"%s\",\"act\":%u}}", key,
+                               static_cast<unsigned>(action));
+    }
+    const bool encoded = length > 0 && static_cast<std::size_t>(length) < message.size();
+    const bool sent    = encoded && sendJson(message.data());
+    if (action == CodexMicroKeyAction::Rotate) {
+        ESP_LOGD(Tag, "TX key=%s act=%u agent=%d sent=%d", key == nullptr ? "" : key, static_cast<unsigned>(action),
+                 static_cast<int>(agent), sent ? 1 : 0);
+    } else {
+        ESP_LOGI(Tag, "TX key=%s act=%u agent=%d sent=%d", key == nullptr ? "" : key, static_cast<unsigned>(action),
+                 static_cast<int>(agent), sent ? 1 : 0);
+    }
+    return sent;
+}
+
+bool CodexMicroBle::sendJoystickNow(float angle, float distance)
+{
+    std::array<char, 112> message = {};
+    const int length = std::snprintf(message.data(), message.size(),
+                                     "{\"method\":\"v.oai.rad\",\"params\":{\"a\":%.6f,\"d\":%.6f}}",
+                                     static_cast<double>(angle), static_cast<double>(distance));
+    const bool encoded = length > 0 && static_cast<std::size_t>(length) < message.size();
+    const bool sent    = encoded && sendJson(message.data());
+    ESP_LOGD(Tag, "TX stick angle=%.3f distance=%.3f sent=%d", static_cast<double>(angle),
              static_cast<double>(distance), sent ? 1 : 0);
     return sent;
 }
@@ -590,48 +788,69 @@ bool CodexMicroBle::sendJson(const char* json)
         return false;
     }
 
+    const int64_t started_us = esp_timer_get_time();
     xSemaphoreTake(_tx_mutex, portMAX_DELAY);
     if (!connected()) {
         xSemaphoreGive(_tx_mutex);
         return false;
     }
 
-    std::string framed(json);
-    framed.push_back('\n');
-    bool success       = true;
-    std::size_t offset = 0;
-    while (offset < framed.size()) {
-        std::size_t chunk          = std::min(PayloadSize, framed.size() - offset);
+    const std::size_t json_length   = std::strlen(json);
+    const std::size_t framed_length = json_length + 1;
+    ++_tx_messages;
+    bool success                    = true;
+    std::size_t offset              = 0;
+    while (offset < framed_length) {
+        const std::size_t chunk    = std::min(PayloadSize, framed_length - offset);
         uint8_t report[ReportSize] = {};
         report[0]                  = 2;
         report[1]                  = static_cast<uint8_t>(chunk);
-        std::memcpy(report + 2, framed.data() + offset, chunk);
+        const std::size_t json_chunk = std::min(chunk, json_length - std::min(offset, json_length));
+        if (json_chunk > 0) {
+            std::memcpy(report + 2, json + offset, json_chunk);
+        }
+        if (json_chunk < chunk) {
+            report[2 + json_chunk] = '\n';
+        }
         esp_err_t error = esp_hidd_dev_input_set(_hid_device, 0, ReportId, report, sizeof(report));
         if (error != ESP_OK) {
+            ++_tx_failures;
             ESP_LOGW(Tag, "input report failed: %s", esp_err_to_name(error));
             success = false;
             break;
         }
+        ++_tx_reports;
         offset += chunk;
-        vTaskDelay(pdMS_TO_TICKS(4));
+        // A fragmented RPC still needs spacing between its BLE reports. Input
+        // events receive their inter-message pacing in the background worker.
+        if (offset < framed_length) {
+            vTaskDelay(pdMS_TO_TICKS(4));
+        }
     }
     xSemaphoreGive(_tx_mutex);
+    const uint32_t elapsed_us = static_cast<uint32_t>(esp_timer_get_time() - started_us);
+    _tx_total_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+    updateAtomicMax(_tx_max_us, elapsed_us);
     return success;
 }
 
 void CodexMicroBle::onOutput(const uint8_t* data, std::size_t length)
 {
+    ++_rx_reports;
     if (data == nullptr || length < 2) {
+        ++_rpc_errors;
         return;
     }
 
     std::size_t offset = length >= 3 && data[0] == ReportId ? 1 : 0;
     if (length < offset + 2 || data[offset] != 2) {
+        ++_rpc_errors;
         return;
     }
 
     if (data[offset + 1] > PayloadSize) {
         ESP_LOGW(Tag, "invalid output payload length=%u", static_cast<unsigned>(data[offset + 1]));
+        ++_rpc_errors;
         _rpc_buffer.clear();
         return;
     }
@@ -639,6 +858,7 @@ void CodexMicroBle::onOutput(const uint8_t* data, std::size_t length)
     if (length < offset + 2 + payloadLength) {
         ESP_LOGW(Tag, "truncated output report len=%u payload=%u", static_cast<unsigned>(length),
                  static_cast<unsigned>(payloadLength));
+        ++_rpc_errors;
         return;
     }
 
@@ -652,6 +872,7 @@ void CodexMicroBle::onOutput(const uint8_t* data, std::size_t length)
 
     if (_rpc_buffer.size() + payloadLength > MaxRpcBufferSize) {
         ESP_LOGW(Tag, "RPC buffer limit exceeded");
+        ++_rpc_errors;
         _rpc_buffer.clear();
         return;
     }
@@ -673,11 +894,13 @@ void CodexMicroBle::onOutput(const uint8_t* data, std::size_t length)
     if (request == nullptr) {
         if (!_rpc_buffer.empty() && _rpc_buffer.back() == '\n') {
             ESP_LOGW(Tag, "invalid complete RPC payload");
+            ++_rpc_errors;
             _rpc_buffer.clear();
         }
         return;
     }
 
+    ++_rpc_messages;
     handleRpc(request);
     cJSON_Delete(request);
     _rpc_buffer.clear();

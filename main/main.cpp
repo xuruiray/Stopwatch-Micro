@@ -13,6 +13,7 @@
 #include <memory>
 #include <new>
 #include <utility>
+#include <freertos/task.h>
 
 using namespace mooncake;
 using namespace smooth_ui_toolkit;
@@ -61,5 +62,8 @@ extern "C" void app_main(void)
             last_codex_battery_update = now;
             GetCodexMicroBle().setBattery(GetHAL().getBatteryLevel(), GetHAL().isBatteryCharging());
         }
+        // main_task, Bluedroid, and the HID TX worker share CPU0. Yield one
+        // tick so transport activity cannot reduce touch/UI scheduling time.
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }

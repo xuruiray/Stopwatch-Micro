@@ -3,6 +3,7 @@ set(APP_SRCS
     "apps/app_codex_micro/view/view.cpp"
     "apps/common/audio/audio.cpp"
     "apps/common/key_manager/key_manager.cpp"
+    "debug/serial_debug.cpp"
 )
 
 set(PLATFORM_SRCS

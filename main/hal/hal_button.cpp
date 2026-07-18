@@ -30,6 +30,7 @@ void Hal::button_init()
 
     // Load config from settings
     getButtonConfig(true);
+    _buttons_ready = true;
 }
 
 void Hal::updateButtonStates()

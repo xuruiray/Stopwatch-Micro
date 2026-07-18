@@ -25,6 +25,12 @@ public:
     void update(const CodexMicroState& state);
     void togglePage();
     void setMicActive(bool active);
+    bool ready() const;
+    bool functionalEnabled() const;
+    bool micActive() const;
+    Page currentPage() const;
+    bool setPageForDebug(Page page);
+    void setInputSuppressed(bool suppressed);
 
 private:
     enum class Icon : uint8_t {
@@ -51,8 +57,10 @@ private:
     static void keyEvent(lv_event_t* event);
     static void iconEvent(lv_event_t* event);
     static void commandDeckEvent(lv_event_t* event);
+    static void joystickHitTestEvent(lv_event_t* event);
     static void joystickEvent(lv_event_t* event);
     static void dialTrackEvent(lv_event_t* event);
+    static void dialHitTestEvent(lv_event_t* event);
     static void dialEvent(lv_event_t* event);
     static void touchEvent(lv_event_t* event);
 
@@ -71,10 +79,12 @@ private:
                              CodexMicroControl control, Icon icon);
     void stylePanel(lv_obj_t* object, uint32_t background, uint32_t border, int radius, int border_width = 1);
     void updateConnection(const CodexMicroState& state);
-    void updateAmbientLighting(const CodexMicroState& state);
+    void updateAmbientLighting(const CodexMicroLight& light);
     void updateCommandLighting(const CodexMicroState& state);
     void updateAgentLights(const CodexMicroState& state);
     void updateMicMeter();
+    bool interactionActive() const;
+    void invalidateCommandSegment(std::size_t slot);
     void updateJoystickFromPoint(const lv_point_t& point);
     void releaseJoystick();
     void setDialVisualStep(float step);
@@ -82,20 +92,19 @@ private:
     void beginDialReturn();
     void updateDialReturn();
     void resetDial();
-    void rotateDial(int direction);
     void releaseDialGesture();
 
-    lv_obj_t* _root                        = nullptr;
-    lv_vector_path_t* _command_path        = nullptr;
-    lv_obj_t* _ambient_ring                = nullptr;
-    lv_obj_t* _touch_control               = nullptr;
-    lv_obj_t* _mic_screen                  = nullptr;
-    lv_obj_t* _pairing_screen              = nullptr;
-    lv_obj_t* _pairing_pulse               = nullptr;
-    lv_obj_t* _pairing_core                = nullptr;
-    std::array<lv_obj_t*, 9> _mic_bars     = {};
-    std::array<lv_obj_t*, 3> _pairing_dots = {};
-    std::array<lv_obj_t*, 2> _page_roots   = {};
+    lv_obj_t* _root                           = nullptr;
+    lv_vector_path_t* _command_path           = nullptr;
+    std::array<lv_obj_t*, 14> _ambient_layers = {};
+    lv_obj_t* _touch_control                  = nullptr;
+    lv_obj_t* _mic_screen                     = nullptr;
+    lv_obj_t* _pairing_screen                 = nullptr;
+    lv_obj_t* _pairing_pulse                  = nullptr;
+    lv_obj_t* _pairing_core                   = nullptr;
+    std::array<lv_obj_t*, 9> _mic_bars        = {};
+    std::array<lv_obj_t*, 3> _pairing_dots    = {};
+    std::array<lv_obj_t*, 2> _page_roots      = {};
 
     std::array<KeyContext, 4> _command_contexts   = {};
     std::array<bool, 4> _command_lit              = {};
@@ -111,6 +120,7 @@ private:
     bool _joystick_active    = false;
     float _joystick_angle    = 0.0f;
     float _joystick_distance = 0.0f;
+    uint32_t _joystick_last_send_tick = 0;
 
     lv_obj_t* _dial               = nullptr;
     lv_obj_t* _dial_thumb         = nullptr;
@@ -124,17 +134,25 @@ private:
     uint32_t _dial_press_tick     = 0;
     uint32_t _dial_release_tick   = 0;
     uint32_t _dial_return_tick    = 0;
+    uint32_t _dial_last_feedback_tick = 0;
 
-    bool _touch_pressed            = false;
-    bool _mic_active               = false;
-    float _mic_smoothed_level      = 0.18f;
-    uint32_t _mic_last_update_tick = 0;
-    uint32_t _touch_press_tick     = 0;
-    uint32_t _last_state_revision  = UINT32_MAX;
-    int8_t _last_connection_phase  = -1;
-    bool _functional_enabled       = false;
-    bool _page_dirty               = true;
-    Page _page                     = Page::Command;
+    bool _touch_pressed                = false;
+    bool _mic_active                   = false;
+    float _mic_smoothed_level          = 0.0f;
+    uint32_t _mic_last_update_tick     = 0;
+    uint32_t _command_last_update_tick = 0;
+    uint32_t _agent_last_update_tick   = 0;
+    CodexMicroLight _ambient_light     = {};
+    uint32_t _ambient_base_color       = UINT32_MAX;
+    uint8_t _ambient_base_brightness   = UINT8_MAX;
+    bool _ambient_visible              = false;
+    uint32_t _touch_press_tick         = 0;
+    uint32_t _last_state_revision      = UINT32_MAX;
+    int8_t _last_connection_phase      = -1;
+    bool _functional_enabled           = false;
+    bool _input_suppressed             = false;
+    bool _page_dirty                   = true;
+    Page _page                         = Page::Command;
 };
 
 }  // namespace view
